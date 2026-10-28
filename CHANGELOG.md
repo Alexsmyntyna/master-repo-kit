@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2 — 2026-10-28
+
+- Security: agents' `git branch` allows are exact commands with no wildcard, since git accepts bundled flags (`-vD`) and shortened options (`--del`) that slipped past 0.2.1's deny patterns. Filtered listing goes through `git for-each-ref`.
+
 ## 0.2.1 — 2026-10-28
 
 - Security: read-only agent runs (thread turns, fan-out lanes, recheck, the contradiction judge, screens) no longer load user or project Claude Code settings, whose permission rules could let them run commands such as `rm` or `git commit`. Agents list branches only in read-only forms; flags that create, rename or delete a branch, and `--output`, are denied anywhere in the command.

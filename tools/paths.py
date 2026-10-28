@@ -59,11 +59,13 @@ def owner_identities(root: Path | None = None) -> list[str]:
     return values
 
 
-# Agents read the owner's repos with git. Branch listing is allowed only in read-only forms (never Bash(git branch:*),
-# which also creates, renames and deletes); the denies match a writing flag anywhere in the command and win over any allow.
-GIT_BRANCH_READ = ["Bash(git branch -a:*)", "Bash(git branch -r:*)", "Bash(git branch -v:*)", "Bash(git branch -vv:*)",
-                   "Bash(git branch --list:*)", "Bash(git branch --show-current)", "Bash(git branch --contains:*)",
-                   "Bash(git branch --merged:*)", "Bash(git branch --no-merged:*)", "Bash(git branch)"]
+# Agents read the owner's repos with git. `git branch` also creates, renames and deletes, and git accepts bundled
+# short flags (-vD) and shortened long ones (--del), so its allows are exact commands with no wildcard. Filtered
+# listing (--contains, --merged, patterns) goes through git for-each-ref, which only reads.
+GIT_BRANCH_READ = [f"Bash(git branch{args})" for args in
+                   ("", " -a", " -r", " -v", " -vv", " -a -v", " -av", " -avv", " -a -vv", " --show-current",
+                    " --list", " -a --list")] + ["Bash(git for-each-ref:*)"]
+# Belt and braces over any broader allow: writing flags anywhere in a branch command, file output, redirects.
 GIT_DENY = [f"Bash(git branch*{flag}*)" for flag in
             (" -d", " -D", " -m", " -M", " -c", " -C", " -f", " -u", " --delete", " --move", " --copy", " --force",
              " --set-upstream", " --unset-upstream", " --edit-description", " --track", " --no-track")] + [
