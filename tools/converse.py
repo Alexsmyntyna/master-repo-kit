@@ -237,7 +237,7 @@ TOOLS = {
     # Read-only on project repos; the COO may write research notes into its own project's notes folder.
     "ceo": ["Read", "Grep", "Glob", "WebSearch", "WebFetch"],
     "coo": ["Read", "Grep", "Glob", "WebSearch", "WebFetch", "Bash(git log:*)", "Bash(git show:*)",
-            "Bash(git ls-files:*)", "Bash(git branch:*)", "Bash(git diff:*)", "Bash(git rev-list:*)",
+            "Bash(git ls-files:*)", *paths.GIT_BRANCH_READ, "Bash(git diff:*)", "Bash(git rev-list:*)",
             "Bash(git status:*)", "Bash(git worktree list:*)", "Bash(git stash list:*)", "Bash(git stash show:*)",
             ],
 }
@@ -1307,7 +1307,7 @@ def run_claude(prompt: str, role: str, scope: str, model: str, extra_dirs: tuple
            "--max-turns", str(role_spec(role)["max_turns"]),
            # No hooks or MCP servers from the owner's own setup: a plugin hook once made the agent answer it instead
            # of the thread. (--bare would also skip them, but it forces API-key billing.)
-           "--settings", json.dumps(settings), "--strict-mcp-config"]
+           "--settings", json.dumps(settings), "--strict-mcp-config", "--setting-sources", ""]
     tools += [f"{verb}(./{mockup_dir(scope)}/**)" for verb in ("Write", "Edit")]
     if scope != "holding":
         if role == "coo":
@@ -1325,7 +1325,7 @@ def run_claude(prompt: str, role: str, scope: str, model: str, extra_dirs: tuple
     if helpers:
         cmd += ["--agents", json.dumps(helper_agents(tools))]
         tools += ["Agent", "Task"]  # the subagent tool (named Task in older Claude Code)
-    cmd += ["--allowedTools", *tools]
+    cmd += ["--allowedTools", *tools, "--disallowedTools", *paths.GIT_DENY]
     env = subscription_env()
     env.pop(CHAT_PIN, None)  # a run started from a chat agent's command (board) never inherits its grants
     if commands and pin:
@@ -1517,8 +1517,8 @@ def lane_engine(prompt: str, engine: str, model: str | None, cwd: Path, progress
     tools = list(TOOLS["coo"])
     cmd = ["claude", "-p", "--model", model or default_model("coo"), "--output-format", "stream-json",
            "--verbose", "--no-session-persistence", "--max-turns", str(role_spec("coo")["max_turns"]),
-           "--settings", json.dumps({"disableAllHooks": True}), "--strict-mcp-config",
-           "--tools", "Read,Grep,Glob,WebSearch,WebFetch,Bash", "--allowedTools", *tools, "--add-dir", str(ROOT)]
+           "--settings", json.dumps({"disableAllHooks": True}), "--strict-mcp-config", "--setting-sources", "",
+           "--tools", "Read,Grep,Glob,WebSearch,WebFetch,Bash", "--allowedTools", *tools, "--disallowedTools", *paths.GIT_DENY, "--add-dir", str(ROOT)]
     env = subscription_env()
     env.pop(CHAT_PIN, None)
     # Files avoid pipe deadlocks (large prompts and stderr), while stdout stays live.

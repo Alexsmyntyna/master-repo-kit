@@ -337,7 +337,7 @@ def prompt_for(slug: str, pairs: list[dict]) -> str:
 def ask_judge(prompt: str, model: str) -> tuple[list | None, dict]:
     """Run one claude -p turn on the subscription; (parsed array or None, run-log fields)."""
     cmd = ["claude", "-p", "--model", model, "--output-format", "json", "--no-session-persistence",
-           "--max-turns", str(MAX_TURNS), "--settings", json.dumps({"disableAllHooks": True}), "--strict-mcp-config"]
+           "--max-turns", str(MAX_TURNS), "--settings", json.dumps({"disableAllHooks": True}), "--strict-mcp-config", "--setting-sources", ""]
     proc = subprocess.run(cmd, input=prompt, capture_output=True, text=True, cwd=ROOT, env=converse.subscription_env())
     try:
         data = json.loads(proc.stdout)

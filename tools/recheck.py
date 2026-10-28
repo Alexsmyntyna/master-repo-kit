@@ -61,7 +61,7 @@ OPEN_THREAD = ("awaiting-alex", "awaiting-owner", "stale")
 MAX_COMMITS_IN_PROMPT = 60
 MAX_TURNS = 30
 AGENT_TOOLS = ["Read", "Grep", "Glob", "Bash(git log:*)", "Bash(git show:*)", "Bash(git diff:*)",
-               "Bash(git ls-files:*)", "Bash(git blame:*)", "Bash(git branch:*)"]
+               "Bash(git ls-files:*)", "Bash(git blame:*)", *paths.GIT_BRANCH_READ]
 
 
 def today() -> str:
@@ -303,7 +303,7 @@ def ask_agent(prompt: str, repos: list[dict], model: str) -> tuple[dict | None, 
     dirs = [r["path"] for r in repos if Path(r["path"]).is_dir()]
     cmd = ["claude", "-p", "--model", model, "--output-format", "json", "--no-session-persistence",
            "--max-turns", str(MAX_TURNS), "--settings", json.dumps({"disableAllHooks": True}),
-           "--strict-mcp-config", "--allowedTools", *AGENT_TOOLS]
+           "--strict-mcp-config", "--setting-sources", "", "--allowedTools", *AGENT_TOOLS, "--disallowedTools", *paths.GIT_DENY]
     for d in dirs[1:]:
         cmd += ["--add-dir", d]
     proc = subprocess.run(cmd, input=prompt, capture_output=True, text=True, cwd=dirs[0] if dirs else ROOT,

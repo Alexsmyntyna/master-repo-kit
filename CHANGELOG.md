@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1 — 2026-10-28
+
+- Security: read-only agent runs (thread turns, fan-out lanes, recheck, the contradiction judge, screens) no longer load user or project Claude Code settings, whose permission rules could let them run commands such as `rm` or `git commit`. Agents list branches only in read-only forms; flags that create, rename or delete a branch, and `--output`, are denied anywhere in the command.
+
 ## 0.2.0 — 2026-10-28
 
 - The CEO can consult several projects at once: a `FANOUT:` line starts one COO per project in parallel, each in that project's repo, and the thread shows them as live lanes. Then the CEO answers once.

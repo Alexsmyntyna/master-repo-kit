@@ -313,7 +313,7 @@ def analyze(slug: str, surface_ids: list[str] | None, model: str, apply: bool, b
         chunk = entries[start:start + batch]
         cmd = ["claude", "-p", "--model", model, "--output-format", "json", "--no-session-persistence",
                "--max-turns", str(4 + 3 * len(chunk)), "--settings", json.dumps({"disableAllHooks": True}),
-               "--strict-mcp-config", "--allowedTools", "Read"]
+               "--strict-mcp-config", "--setting-sources", "", "--allowedTools", "Read"]
         for d in dirs:
             cmd += ["--add-dir", d]
         began = dt.datetime.now()

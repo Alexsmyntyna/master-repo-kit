@@ -57,3 +57,14 @@ def owner_identities(root: Path | None = None) -> list[str]:
     if not values:
         raise SystemExit(f"Configure emails and handles in {file}; copy local/owner.example.json to get started.")
     return values
+
+
+# Agents read the owner's repos with git. Branch listing is allowed only in read-only forms (never Bash(git branch:*),
+# which also creates, renames and deletes); the denies match a writing flag anywhere in the command and win over any allow.
+GIT_BRANCH_READ = ["Bash(git branch -a:*)", "Bash(git branch -r:*)", "Bash(git branch -v:*)", "Bash(git branch -vv:*)",
+                   "Bash(git branch --list:*)", "Bash(git branch --show-current)", "Bash(git branch --contains:*)",
+                   "Bash(git branch --merged:*)", "Bash(git branch --no-merged:*)", "Bash(git branch)"]
+GIT_DENY = [f"Bash(git branch*{flag}*)" for flag in
+            (" -d", " -D", " -m", " -M", " -c", " -C", " -f", " -u", " --delete", " --move", " --copy", " --force",
+             " --set-upstream", " --unset-upstream", " --edit-description", " --track", " --no-track")] + [
+            "Bash(* --output*)", "Bash(*>*)"]
