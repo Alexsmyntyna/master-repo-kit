@@ -5,7 +5,7 @@ import { getPulse, type Pulse } from "./pulse";
 
 // holding/calendar.json: what the owner keeps track of outside a project's code. Two kinds, the distinction they drew
 // ("Is it something that is due on that day or is it something that I just want to be reminded to check up on"):
-// - `due`: happens on `date` (null when they hasn't given the day). May carry `steps` to get ready.
+// - `due`: happens on `date` (null when they haven't given the day). May carry `steps` to get ready.
 // - `block`: planned work on `date`, usually with `time`/`end` (HH:MM, local) and `steps`; otherwise like `due`.
 // - `check`: comes round every `cadence` after `last_done`; never done means due now; no cadence yet means unscheduled.
 // Projects going quiet and release check-ins aren't stored here; they're read from holding/pulse.json each time.

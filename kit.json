@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "0.1.1",
   "include": [
     "app/",
     "tools/",
@@ -386,6 +386,14 @@
     {
       "term": "read(in)",
       "reason": "Generic portable screenshot workflow example, not private project data."
+    },
+    {
+      "term": "analysis",
+      "reason": "Ordinary word; part of a private slug but used generically in tools and copy."
+    },
+    {
+      "term": "manager",
+      "reason": "Ordinary word; part of a private slug but used generically in tools and copy."
     }
   ]
 }

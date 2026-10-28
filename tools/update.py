@@ -115,7 +115,7 @@ def update(code: Path = paths.CODE, root: Path = paths.ROOT) -> None:
         else:
             git(code, 'commit', '-q', '--amend', '--no-edit')  # fold into the merge commit
     after = git(code, 'rev-parse', 'HEAD').strip()
-    print(f'Kit {before[:12]} -> {after[:12]}; changed:\n' + ('\n'.join(incoming) or '(no engine changes)'))
+    print(f'Kit {label}; hub {before[:12]} -> {after[:12]}; changed:\n' + ('\n'.join(incoming) or '(no engine changes)'))
 
 if __name__ == '__main__':
     update()

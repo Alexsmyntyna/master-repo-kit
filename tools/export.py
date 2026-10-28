@@ -112,9 +112,15 @@ def rules(root: Path, config: dict | None = None) -> list[tuple[str, re.Pattern]
         if file.parent.name in {'_template', 'master-repo', 'master-repo-kit'}:
             continue
         literals.add(('project', file.parent.name))
+        # Distinctive slug parts too (the "tagger" of "photo-tagger"); short or common parts are left to ignore_terms.
+        literals.update(('project', part) for part in file.parent.name.split('-') if len(part) >= 7)
         name = json.loads(file.read_text()).get('name')
         if isinstance(name, str) and name.strip():
             literals.add(('project', name.strip()))
+    # Names the owner wants caught that the data can't derive (a shortened brand name); private, never shipped.
+    watch = root / 'local/export-watch.json'
+    if watch.exists():
+        literals.update(('project', term) for term in json.loads(watch.read_text()).get('terms', []) if isinstance(term, str) and term.strip())
     if isinstance(owner.get('vault'), str) and owner['vault'].strip():
         literals.add(('vault', owner['vault'].strip()))
     owner_notes = root / 'local/owner.md'

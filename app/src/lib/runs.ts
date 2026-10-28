@@ -68,10 +68,10 @@ export async function retryWaiterAlive(): Promise<boolean> {
   }
 }
 // MASTER_REPO_ID names this install's log folder and check-in schedule; tools/master derives the same two names.
-// The default keeps the original install's names.
+// MASTER_REPO_SCHEDULE_LABEL keeps an older install's launchd label; tools/master reads the same.
 const repoId = process.env.MASTER_REPO_ID?.trim() || "master-repo";
 export const logDir = path.join(os.homedir(), "Library", "Logs", repoId);
-const scheduleLabel = repoId === "master-repo" ? "com.smyntyna.master-repo.checkins" : `local.${repoId}.checkins`;
+const scheduleLabel = process.env.MASTER_REPO_SCHEDULE_LABEL?.trim() || `local.${repoId}.checkins`;
 export const schedulePlist = path.join(os.homedir(), "Library", "LaunchAgents", `${scheduleLabel}.plist`);
 
 export async function getRuns(limit = 60): Promise<Run[]> {

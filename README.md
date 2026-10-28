@@ -36,7 +36,15 @@ cd hq
 tools/master init --private-repo <you>/hq
 ```
 
-This uses GitHub CLI (`gh`) to create your private repo, commit your data and push it. The kit remote is named `kit`. Run `tools/master init` without the flag to get the exact commands to run yourself; `--commit` commits the initial data locally.
+Init asks your name, email and GitHub handle, writes your starter files, renames the kit remote to `kit` (updates come from there), and uses the GitHub CLI (`gh`) to create `<you>/hq` as a private repo, commit and push.
+
+Without `gh`, commit locally and add your own private remote:
+
+```sh
+tools/master init --commit
+git remote add origin <your private repo URL>
+git push -u origin HEAD
+```
 
 ## First session
 
@@ -49,10 +57,11 @@ The agent reads `AGENTS.md` and `skills/INDEX.md`, picks the GitHub discovery sk
 To read what the agents wrote, start the app:
 
 ```sh
-cd app && npm install && npm run dev
+cd app && npm install && cd ..
+tools/master
 ```
 
-Then open http://127.0.0.1:3100.
+It builds the app, starts it and opens http://127.0.0.1:3100.
 
 ## Where your data lives
 
@@ -80,7 +89,11 @@ tools/master update
 
 ## What it does not do yet
 
-[CLAIMS.md](CLAIMS.md) lists each claim on the public page and whether the code backs it.
+- Init doesn't touch your other repos. Once your projects have folders, `python3 tools/pointer.py install` adds a `MASTER-REPO.md` and a short block to each repo's CLAUDE.md and AGENTS.md so their agents read the hub first.
+- The CEO can't yet run agents in several repos at once; it works through them one thread at a time.
+- No contradiction check between things you've said on different days.
+- Roles are CEO and COO. Write your own in `agents/` in your hub.
+- Tested with Claude Code. Other agents read `AGENTS.md`, but haven't been tested.
 
 ## Licence
 

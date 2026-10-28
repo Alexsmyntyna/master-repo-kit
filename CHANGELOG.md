@@ -1,8 +1,15 @@
 # Changelog
 
-## 0.1.0 — unreleased
+## 0.1.1 — 2026-10-28
 
-Not released. This is what the code does today.
+- README: both install paths (with and without `gh`), starting the app with `tools/master`, and an honest "not yet" list.
+- `master update` keeps working when you have local skill overrides: the generated skill index and wrappers are rebuilt instead of counted as engine edits.
+- `master update` names the kit release it merged.
+- The check-in schedule's launchd label can be set with `MASTER_REPO_SCHEDULE_LABEL`; the default is `local.<id>.checkins`.
+
+## 0.1.0 — 2026-10-28
+
+First release.
 
 Ships:
 

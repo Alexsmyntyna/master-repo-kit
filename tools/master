@@ -39,8 +39,9 @@ if [ -f "$APP/.env.local" ]; then
     case "$key" in
       MASTER_REPO_ROOT) [ -z "${MASTER_REPO_ROOT:-}" ] && export MASTER_REPO_ROOT="$value" ;;
       MASTER_REPO_ID) [ -z "${MASTER_REPO_ID:-}" ] && export MASTER_REPO_ID="$value" ;;
+      MASTER_REPO_SCHEDULE_LABEL) [ -z "${MASTER_REPO_SCHEDULE_LABEL:-}" ] && export MASTER_REPO_SCHEDULE_LABEL="$value" ;;
     esac
-  done < <(grep -E '^(MASTER_REPO_ROOT|MASTER_REPO_ID)=' "$APP/.env.local")
+  done < <(grep -E '^(MASTER_REPO_ROOT|MASTER_REPO_ID|MASTER_REPO_SCHEDULE_LABEL)=' "$APP/.env.local")
 fi
 DATA="${MASTER_REPO_ROOT:-$REPO}"
 ID="${MASTER_REPO_ID:-master-repo}"
@@ -75,7 +76,8 @@ start() {
   echo "Server didn't come up, see $LOG"; exit 1
 }
 
-LABEL="local.$ID.checkins"
+# An install whose schedule predates MASTER_REPO_ID keeps its launchd label via MASTER_REPO_SCHEDULE_LABEL (app/src/lib/runs.ts reads the same).
+LABEL="${MASTER_REPO_SCHEDULE_LABEL:-local.$ID.checkins}"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 
 schedule() {
