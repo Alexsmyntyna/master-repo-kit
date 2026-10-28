@@ -1,0 +1,66 @@
+{
+  "id": "slug",
+  "name": "Name",
+  "kind": null,
+  "stage": null,
+  "ambition": null,
+  "one_liner": null,
+  "repos": [],
+  "lineage": [],
+  "links": {
+    "public": [],
+    "mockups": [],
+    "docs": []
+  },
+  "thesis": {
+    "why_it_exists": null,
+    "the_bet": null,
+    "what_it_should_become": null
+  },
+  "customer": {
+    "who": null,
+    "problem": null,
+    "current_alternatives": null,
+    "why_switch": null
+  },
+  "market": {
+    "competitors": [],
+    "positioning": null,
+    "business_model": null,
+    "fit_evidence": []
+  },
+  "brand": {
+    "name_notes": null,
+    "promise": null,
+    "voice": null,
+    "visual_direction": null
+  },
+  "product": {
+    "current_state": null,
+    "verified_at": null,
+    "capabilities": [],
+    "gaps": [],
+    "rebuild": []
+  },
+  "roadmap": {
+    "now": [],
+    "next": [],
+    "later": []
+  },
+  "assumptions": [],
+  "risks": [],
+  "open_questions": [],
+  "reentry": {
+    "last_active": null,
+    "left_off": null,
+    "in_flight": [],
+    "first_step_back": null
+  },
+  "developer": {
+    "technologies": [],
+    "techniques": [],
+    "lessons": []
+  },
+  "legacy_notes": [],
+  "updated": "2026-09-25"
+}

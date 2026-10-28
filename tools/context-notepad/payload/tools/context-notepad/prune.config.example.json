@@ -1,0 +1,18 @@
+{
+  "_comment": "Copy to tools/context-notepad/prune.config.json and edit. List values extend the built-in defaults unless noted.",
+  "root_allowlist": ["ROADMAP.md"],
+  "remnant_globs": ["*_PLAN.md", "plan-*.md", "*brief*", "temp", "temp.*", "temp-*", "temp_*", "scratch*", "*.orig", "*.rej", ".DS_Store"],
+  "remnant_skip_extensions": [".swift", ".py", ".js", ".ts", ".tsx", ".m", ".h", ".kt", ".java", ".go", ".rs"],
+  "exclude_dirs": [".git", "node_modules", "build", "DerivedData", ".build", "Pods", ".venv", "venv", "__pycache__", "dist", ".obsidian"],
+  "protected_paths": [".env*", "Read/Models/"],
+  "doc_roots": [],
+  "one_time_phrases": ["handoff", "hand-off", "brief", "do not re-litigate", "implement it"],
+  "stale_days": 60,
+  "archive_convention": "context/archive/<year>/<YYYY-MM-DD>/",
+  "doc_header_convention": "Status: <state>; Last verified: <YYYY-MM-DD> in the first lines of each doc",
+  "post_checks": ["python3 tools/context_docs.py --check", "python3 tools/codebase_map.py --check"],
+  "max_hash_bytes": 1000000,
+  "duplicate_min_bytes": 64,
+  "size_scan_entry_cap": 20000,
+  "max_rows_per_category": 40
+}

@@ -1,0 +1,23 @@
+{
+  "repo_prefixes": [],
+  "notepad_dir": "context-notepad/threads",
+  "mockup_dir": "",
+  "activity_log": "context-notepad/activity.jsonl",
+  "context_soft_tokens": 150000,
+  "context_hard_tokens": 200000,
+  "roles": {
+    "claude": {"coordinator": "opus", "builder": "sonnet", "small_builder": "haiku", "scout": "haiku"},
+    "codex": {"coordinator": "CODEX_COORDINATOR_MODEL", "builder": "CODEX_BUILDER_MODEL", "scout": "CODEX_SCOUT_MODEL"}
+  },
+  "escalation": ["haiku", "sonnet", "opus"],
+  "claude_projects_dir": "~/.claude/projects",
+  "codex_session_dirs": ["~/.codex/sessions", "~/.codex/archived_sessions"],
+  "extra_drop_prefixes": [],
+  "correction_patterns": [
+    "no\\b", "nope\\b", "not what\\b", "i meant\\b", "actually\\b",
+    "that'?s wrong\\b", "stop\\b", "wait\\b", "instead\\b", "why did you\\b"
+  ],
+  "codex_session_index": "~/.codex/session_index.jsonl",
+  "max_reply_chars": 400,
+  "include_codex_exec_sessions": false
+}

@@ -1,0 +1,78 @@
+/* An agent's report read as a brief (components/brief.tsx): a lead line, then labelled parts on hairlines.
+   No boxes, no tints: a label with a small dot, the text beside it on a wide column and under it on a narrow one. */
+
+.brief { display: grid; gap: 18px; min-width: 0; container-type: inline-size; container-name: brief; }
+.brief-lead { font-size: var(--t-lg); line-height: 1.55; color: var(--text); max-width: var(--measure); text-wrap: pretty; }
+.brief-lead code { font: 0.86em var(--mono); padding: 1px 5px; border-radius: var(--r-sm); background: var(--raised); }
+.brief-lead strong { font-weight: 600; }
+.brief-lead a { color: var(--accent); }
+.brief .prose { font-size: var(--t-md); }
+
+/* a labelled part */
+.brief-part { display: grid; gap: 6px; padding-top: 14px; border-top: 1px solid var(--line-soft); min-width: 0; }
+.brief-label {
+  --dot: var(--idle);
+  display: flex; align-items: center; gap: 8px; margin: 0;
+  font: 500 var(--t-sm)/1.5 var(--sans); letter-spacing: 0; color: var(--text);
+}
+.brief-label i { flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--dot); }
+.brief-label.tone-decision { --dot: var(--ok); }
+.brief-label.tone-risk { --dot: var(--risk); }
+.brief-label.tone-question { --dot: var(--attention); color: var(--attention); }
+.brief-body { min-width: 0; }
+.brief-body .prose { color: var(--text-2); }
+
+@container brief (min-width: 620px) {
+  .brief-part { grid-template-columns: 168px minmax(0, 1fr); gap: 0 24px; }
+  .brief-label { align-self: start; padding-top: 2px; }
+}
+
+/* questions for the owner: numbered in amber, the question itself in full text colour, no fill */
+.brief-part.is-question .prose { color: var(--text); }
+.brief-part.is-question .prose ol { list-style: none; padding: 0; counter-reset: q; display: grid; gap: 10px; }
+.brief-part.is-question .prose ol > li { counter-increment: q; position: relative; margin: 0; padding-left: 28px; }
+.brief-part.is-question .prose ol > li::before {
+  content: counter(q); position: absolute; left: 0; top: 0; min-width: 18px;
+  font: 600 var(--t-sm)/1.7 var(--sans); font-variant-numeric: tabular-nums; color: var(--attention);
+}
+
+/* figures inside a brief: smaller than a page's Stats, no cards */
+.brief-stats { display: flex; flex-wrap: wrap; gap: 14px 40px; margin: 0; padding-top: 14px; border-top: 1px solid var(--line-soft); }
+.brief-stat { display: grid; gap: 1px; align-content: start; min-width: 0; max-width: 220px; }
+.brief-stat dd, .brief-stat dt { margin: 0; }
+.brief-stat > dd:first-child { font-size: var(--t-xl); font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; color: var(--text); font-variant-numeric: tabular-nums; }
+.brief-stat dt { font-size: var(--t-sm); color: var(--text-2); }
+.brief-stat-note { font-size: var(--t-xs); color: var(--faint); }
+
+/* steps: numbers on a hairline */
+.brief-flow { list-style: none; margin: 0; padding: 14px 0 0; border-top: 1px solid var(--line-soft); display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 16px; }
+.flow-step { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 10px; align-content: start; min-width: 0; }
+.flow-step + .flow-step::before { content: ""; position: absolute; left: -16px; top: 11px; width: 12px; height: 1px; background: var(--line); }
+.flow-n {
+  width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
+  font-size: var(--t-xs); font-variant-numeric: tabular-nums; color: var(--muted); border: 1px solid var(--line);
+}
+.flow-text { display: grid; gap: 2px; min-width: 0; padding-top: 1px; }
+.flow-text strong { font-size: var(--t-sm); font-weight: 500; line-height: 1.4; color: var(--text); }
+.flow-text small { font-size: var(--t-xs); color: var(--muted); line-height: 1.45; }
+.flow-step em { grid-column: 2; font-style: normal; font-size: var(--t-xs); color: var(--muted); }
+.flow-step.is-now .flow-n { background: var(--text); border-color: var(--text); color: var(--bg); }
+.flow-step.is-now em { color: var(--text); }
+.flow-step.is-done .flow-n { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, transparent); }
+.flow-step.is-done .flow-text strong { color: var(--muted); font-weight: 400; }
+.flow-step.is-risk .flow-n { color: var(--risk); border-color: color-mix(in srgb, var(--risk) 50%, transparent); }
+.flow-step.is-risk em { color: var(--risk); }
+@container brief (max-width: 560px) {
+  .brief-flow { grid-auto-flow: row; }
+  .flow-step + .flow-step::before { left: 11px; top: -12px; width: 1px; height: 10px; }
+}
+
+/* what an answer did to other open questions */
+.brief-reconcile { display: grid; }
+.reconcile-item { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: 12px; align-items: baseline; padding: 6px 0; font-size: var(--t-sm); color: var(--text-2); }
+.reconcile-item + .reconcile-item { border-top: 1px solid var(--line-soft); }
+.reconcile-item b { font-weight: 500; font-size: var(--t-xs); }
+.reconcile-item.is-withdraw b { color: var(--muted); }
+.reconcile-item.is-redo b { color: var(--attention); }
+.reconcile-item small { font-size: var(--t-xs); color: var(--faint); }
+.reconcile-item:hover span { color: var(--text); }

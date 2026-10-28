@@ -1,0 +1,152 @@
+/* The pages under "More": Projects, Codebases, Queue, Runs, Skills, Identity, Guide, Screens, documents,
+   and the error pages. Built on the shared blocks in ds.css; only what they add is here. */
+
+/* ---------- projects */
+.cat-trail { display: inline-flex; align-items: center; gap: 18px; }
+.cat-trail .mono { min-width: 52px; text-align: right; color: var(--faint); }
+
+/* ---------- queue */
+.q-new { margin-bottom: 24px; }
+.q-form { display: grid; gap: 14px; padding: 20px 22px; border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--line-soft); }
+.q-form-row { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 14px; }
+.q-field { display: grid; gap: 6px; font-size: var(--t-sm); font-weight: 500; color: var(--text-2); }
+.q-field input, .q-field select, .q-field textarea {
+  width: 100%; padding: 9px 12px; border-radius: var(--r-md); background: var(--bg); border: 1px solid var(--line);
+  color: var(--text); font: inherit; font-weight: 400; font-size: var(--t-md);
+}
+.q-field textarea { resize: vertical; line-height: 1.55; font: 400 16.5px/1.55 var(--serif); }
+.q-field textarea::placeholder, .q-field input::placeholder { font-family: var(--sans); font-size: var(--t-sm); color: var(--faint); }
+.q-field select option { background: var(--surface); }
+.q-field input:focus, .q-field select:focus, .q-field textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.q-form-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+.q-form-actions p { margin-right: auto; }
+.q-error { font-size: var(--t-sm); color: var(--risk); }
+.q-saved { display: inline-flex; align-items: center; gap: 6px; font-size: var(--t-sm); color: var(--ok); }
+.q-saved a { color: var(--accent); }
+@media (max-width: 760px) { .q-form-row { grid-template-columns: 1fr; } }
+
+/* ---------- runs */
+.run-ok { color: var(--ok); }
+.run-bad { color: var(--risk); }
+.turns { display: grid; font-size: var(--t-sm); }
+.turn {
+  display: grid; grid-template-columns: 16px 46px minmax(0, 1fr) 130px 52px 150px; gap: 12px; align-items: baseline;
+  padding: 8px 10px; margin: 0 -10px; border-radius: var(--r-md); color: var(--text-2);
+}
+.turn + .turn { box-shadow: 0 -1px 0 var(--line-soft); }
+a.turn:hover { background: var(--surface); box-shadow: none; }
+a.turn:hover + .turn { box-shadow: none; }
+.turn > svg { align-self: center; }
+.turn-head { font-size: var(--t-xs); color: var(--faint); padding-bottom: 6px; }
+.turn-where { min-width: 0; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.turn-where small { display: block; white-space: normal; font-size: var(--t-xs); color: var(--risk); }
+.turn > :nth-child(4), .turn > :nth-child(5) { text-align: right; }
+.turn > :last-child { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 900px) {
+  .turn { grid-template-columns: 16px 40px minmax(0, 1fr) auto; }
+  .turn > :nth-child(5), .turn > :nth-child(6) { display: none; }
+}
+.runs-fold, .runs-logs { display: grid; gap: 8px; margin-top: 14px; }
+.log-tail {
+  margin: 0; padding: 10px 12px; max-height: 260px; overflow: auto; border-radius: var(--r-md); background: var(--bg-sunk);
+  font: 12px/1.55 var(--mono); color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.runs-logs .fold-body { padding-top: 8px; }
+
+/* ---------- skills */
+.skill-title { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* ---------- identity */
+.lessons { display: grid; gap: 24px; }
+.lessons .statement + .statement { margin-top: 0; }
+
+/* ---------- guide */
+.guide-start { display: grid; gap: 0; margin: 0; font-size: var(--t-md); }
+.guide-start > div { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 16px; padding: 10px 0; }
+.guide-start > div + div { border-top: 1px solid var(--line-soft); }
+.guide-start dt { font-size: var(--t-sm); color: var(--muted); }
+.guide-start dd { margin: 0; color: var(--text-2); overflow-wrap: normal; }
+.guide-start b { font-weight: 500; color: var(--text); }
+.guide-say { display: grid; }
+.guide-say-row { display: grid; grid-template-columns: minmax(0, 1.5fr) 128px minmax(0, 1fr); gap: 18px; padding: 10px 0; font-size: var(--t-sm); }
+.guide-say-row + .guide-say-row { border-top: 1px solid var(--line-soft); }
+.guide-say-head { font-size: var(--t-xs); color: var(--faint); padding-top: 0; }
+.guide-quote { display: grid; gap: 2px; color: var(--text); }
+.guide-quote q { quotes: "“" "”"; }
+.guide-quote q:not(:first-child) { color: var(--text-2); }
+.guide-when { color: var(--muted); }
+.guide-skill { color: var(--code); }
+.guide-shows { color: var(--text-2); }
+.guide-where { gap: 12px; }
+.guide-where > div { grid-template-columns: 1fr; gap: 2px; }
+@media (max-width: 760px) {
+  .guide-say-row { grid-template-columns: 1fr; gap: 2px; }
+  .guide-say-head { display: none; }
+  .guide-start > div { grid-template-columns: 1fr; gap: 2px; }
+}
+
+/* ---------- a document */
+.doc-page { max-width: 860px; }
+.doc-page .ph h1 { font-size: var(--t-2xl); }
+.doc-page .ph-kicker { color: var(--faint); }
+.doc-body { padding-top: 24px; border-top: 1px solid var(--line-soft); }
+
+/* ---------- screens */
+.scr-cover { display: inline-flex; align-items: center; gap: 8px; }
+.scr-bar { display: inline-block; width: 120px; height: 4px; border-radius: 2px; background: var(--raised); overflow: hidden; }
+.scr-bar i { display: block; height: 100%; background: var(--ok); }
+.scr-strip { display: flex; gap: 4px; }
+.scr-strip img { width: 30px; aspect-ratio: 9 / 16; object-fit: cover; object-position: top; border-radius: var(--r-sm); background: var(--bg-sunk); border: 1px solid var(--line-soft); }
+@media (max-width: 760px) { .scr-strip { display: none; } }
+
+/* ---------- error and not found */
+.oops { padding-top: 40px; max-width: 760px; }
+.oops-detail { font-size: var(--t-sm); color: var(--faint); }
+
+/* ---------- codebases table (components/codebase-table.tsx, on the shared .dtable) */
+.cbt { table-layout: fixed; margin-top: 8px; }
+.cbt th:nth-child(1) { width: 22%; }
+.cbt th:nth-child(2) { width: 13%; }
+.cbt th:nth-child(3) { width: 112px; }
+.cbt th:nth-child(4) { width: 132px; }
+.cbt th:nth-child(5) { width: 130px; }
+.cbt-learn-head { display: inline-flex; align-items: center; gap: 8px; }
+.cbt-item { cursor: pointer; scroll-margin-top: 90px; }
+.cbt-item.is-open td { background: var(--surface); border-bottom-color: transparent; }
+.cbt-name { display: flex; align-items: center; gap: 6px; max-width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; }
+.cbt-name strong { font-weight: 500; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cbt-chev { flex: none; color: var(--faint); transition: transform 0.12s; }
+.is-open .cbt-chev { transform: rotate(90deg); color: var(--text); }
+.cbt td.cbt-lang, .cbt td.cbt-learn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cbt-last { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cbt .dbar { width: 48px; }
+.dtable tbody tr.cbt-detail:hover td, .cbt-detail td { background: var(--surface); padding: 6px 10px 22px 30px; cursor: default; }
+@media (max-width: 1100px) {
+  .cbt .cbt-lang { display: none; }
+}
+@media (max-width: 760px) {
+  .cbt .cbt-commits, .cbt .cbt-learn { display: none; }
+  .cbt-detail td { padding-left: 10px; }
+}
+/* a codebase, opened */
+.cbd { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 40px; }
+.cbd-main { display: grid; gap: 18px; align-content: start; min-width: 0; }
+.cbd-main .statement + .statement { margin-top: 0; }
+.cbd-facts { align-content: start; gap: 8px; }
+.cbd-facts > div { grid-template-columns: 84px minmax(0, 1fr); }
+.cbd-facts dd { min-width: 0; }
+.cbd-facts .run { max-width: 200px; overflow: hidden; }
+@media (max-width: 1100px) { .cbd { grid-template-columns: 1fr; gap: 20px; } }
+
+/* ---------- a standard read as a ledger (app/standards/[name]): rule text, then its source tag and where from */
+.ledger { display: grid; gap: var(--s-4); }
+.ledger-head { margin-top: var(--s-5); padding-bottom: var(--s-2); border-bottom: 1px solid var(--line); font-size: var(--t-lg); }
+.ledger-head:first-child { margin-top: 0; }
+.ledger-rules { list-style: none; margin: 0; padding: 0; display: grid; }
+.ledger-rule { display: grid; gap: 3px; padding: var(--s-3) 0; }
+.ledger-rule + .ledger-rule { border-top: 1px solid var(--line-soft); }
+.ledger-text { color: var(--text); line-height: 1.55; }
+.ledger-src { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px var(--s-3); font-size: var(--t-xs); color: var(--faint); }
+.ledger-ref { min-width: 0; overflow-wrap: anywhere; }
+.ledger-rule.is-struck .ledger-text { color: var(--faint); text-decoration: line-through; }
+.ledger .prose { color: var(--text-2); }

@@ -1,0 +1,10 @@
+{
+  "currency": "USD",
+  "products": {
+    "finance-app": {
+      "model": "Subscription",
+      "goal_monthly": null,
+      "actual_monthly": null
+    }
+  }
+}

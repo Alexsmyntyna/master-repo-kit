@@ -1,0 +1,391 @@
+{
+  "version": "0.1.0",
+  "include": [
+    "app/",
+    "tools/",
+    "agents/",
+    "skills/",
+    "standards/",
+    ".claude/skills/",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "DATA.md",
+    "companies/_template/",
+    "local/owner.example.json",
+    "guide/",
+    "kit/",
+    "kit.json",
+    ".gitignore"
+  ],
+  "exclude": [
+    "**/node_modules/**",
+    "**/.next/**",
+    "**/__pycache__/**",
+    "**/.env*",
+    "**/*.log",
+    "**/logs/**",
+    "**/screenshots/**",
+    "**/.DS_Store",
+    "kit/CLAIMS.md",
+    "kit/LAUNCH.md",
+    "app/tsconfig.tsbuildinfo",
+    "**/.pytest_cache/**"
+  ],
+  "allow": [
+    {
+      "file": "app/src/app/companies/[slug]/model/page.tsx",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "app/src/app/companies/[slug]/page.tsx",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "app/src/app/companies/[slug]/timeline/page.tsx",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "app/src/app/company/page.tsx",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "app/src/app/threads/[scope]/[thread]/page.tsx",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "app/src/components/dock/dock-messages.tsx",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "app/src/components/dock/dock.tsx",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "app/src/components/kind-chip.tsx",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "app/src/components/provenance.tsx",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "app/src/components/thread-view.tsx",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "app/src/components/value.tsx",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "app/src/components/wiki.tsx",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "app/src/lib/company.ts",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "app/src/lib/ideas.ts",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "app/src/lib/ledger.ts",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "app/src/lib/pricing-charts.ts",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "app/src/lib/threads.ts",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "app/src/lib/voice.ts",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "app/src/lib/wiki.ts",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "app/tests/schema-compat.test.ts",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "kit.json",
+      "pattern": "-----BEGIN",
+      "reason": "Documents a literal, file-scoped scanner exception below; not private data."
+    },
+    {
+      "file": "kit.json",
+      "pattern": "/Users/[^/",
+      "reason": "Documents a literal, file-scoped scanner exception below; not private data."
+    },
+    {
+      "file": "kit.json",
+      "pattern": "/Users/someone/",
+      "reason": "Documents a literal, file-scoped scanner exception below; not private data."
+    },
+    {
+      "file": "kit.json",
+      "pattern": "alex",
+      "reason": "Documents a literal, file-scoped scanner exception below; not private data."
+    },
+    {
+      "file": "kit.json",
+      "pattern": "casey@private.test",
+      "reason": "Documents a literal, file-scoped scanner exception below; not private data."
+    },
+    {
+      "file": "kit.json",
+      "pattern": "dana@example.test",
+      "reason": "Documents a literal, file-scoped scanner exception below; not private data."
+    },
+    {
+      "file": "kit.json",
+      "pattern": "test@example.test",
+      "reason": "Documents a literal, file-scoped scanner exception below; not private data."
+    },
+    {
+      "file": "kit.json",
+      "pattern": "user@private.test",
+      "reason": "Documents a literal, file-scoped scanner exception below; not private data."
+    },
+    {
+      "file": "kit.json",
+      "pattern": "~/Library/Mobile Documents",
+      "reason": "Documents a literal, file-scoped scanner exception below; not private data."
+    },
+    {
+      "file": "tools/card.py",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "tools/converse.py",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "tools/export.py",
+      "pattern": "-----BEGIN",
+      "reason": "Literal leak/secret detection regex; contains no credential or personal path."
+    },
+    {
+      "file": "tools/export.py",
+      "pattern": "/Users/[^/",
+      "reason": "Literal leak/secret detection regex; contains no credential or personal path."
+    },
+    {
+      "file": "tools/export.py",
+      "pattern": "~/Library/Mobile Documents",
+      "reason": "Literal leak/secret detection regex; contains no credential or personal path."
+    },
+    {
+      "file": "tools/inbox.py",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "tools/migrate.py",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "tools/portfolio.py",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "tools/recheck.py",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "tools/refresh.py",
+      "pattern": "-----BEGIN",
+      "reason": "Literal leak/secret detection regex; contains no credential or personal path."
+    },
+    {
+      "file": "tools/refresh.py",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "tools/rules.py",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "tools/screens.py",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "tools/test_export.py",
+      "pattern": "-----BEGIN",
+      "reason": "Synthetic leak detector fixture; intentionally exercises private email, home path, vault and secret detection."
+    },
+    {
+      "file": "tools/test_export.py",
+      "pattern": "/Users/someone/",
+      "reason": "Synthetic leak detector fixture; intentionally exercises private email, home path, vault and secret detection."
+    },
+    {
+      "file": "tools/test_export.py",
+      "pattern": "casey@private.test",
+      "reason": "Synthetic leak detector fixture; intentionally exercises private email, home path, vault and secret detection."
+    },
+    {
+      "file": "tools/test_export.py",
+      "pattern": "user@private.test",
+      "reason": "Synthetic leak detector fixture; intentionally exercises private email, home path, vault and secret detection."
+    },
+    {
+      "file": "tools/test_export.py",
+      "pattern": "~/Library/Mobile Documents",
+      "reason": "Synthetic leak detector fixture; intentionally exercises private email, home path, vault and secret detection."
+    },
+    {
+      "file": "tools/test_footprint.py",
+      "pattern": "-----BEGIN",
+      "reason": "Fake private key marker used to test secret detection; no key material."
+    },
+    {
+      "file": "tools/test_init.py",
+      "pattern": "dana@example.test",
+      "reason": "Reserved test domain in an isolated fixture; not a real contact."
+    },
+    {
+      "file": "tools/test_migrate.py",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "tools/test_update.py",
+      "pattern": "test@example.test",
+      "reason": "Reserved test domain in an isolated fixture; not a real contact."
+    },
+    {
+      "file": "LICENSE",
+      "pattern": "Alex",
+      "reason": "Public copyright holder attribution in the MIT license."
+    },
+    {
+      "file": "LICENSE",
+      "pattern": "Alex Smyntyna",
+      "reason": "Public copyright holder attribution in the MIT license."
+    },
+    {
+      "file": "README.md",
+      "pattern": "Alexsmyntyna",
+      "reason": "Public clone URL github.com/Alexsmyntyna/master-repo-kit."
+    },
+    {
+      "file": "DATA.md",
+      "pattern": "alex",
+      "reason": "Documents the legacy schema token migrated by tools/master migrate."
+    },
+    {
+      "file": "kit.json",
+      "pattern": "Alex",
+      "reason": "Documents the explicitly public copyright or public repository URL exception."
+    },
+    {
+      "file": "kit.json",
+      "pattern": "Alex Smyntyna",
+      "reason": "Documents the explicitly public copyright or public repository URL exception."
+    },
+    {
+      "file": "kit.json",
+      "pattern": "Alexsmyntyna",
+      "reason": "Documents the explicitly public copyright or public repository URL exception."
+    },
+    {
+      "file": "app/src/app/layout.tsx",
+      "pattern": "alex",
+      "reason": "Legacy version 1 schema token required for compatibility with existing private data."
+    },
+    {
+      "file": "app/src/app/threads/actions.ts",
+      "pattern": "alex",
+      "reason": "Legacy version 1 schema token required for compatibility with existing private data."
+    },
+    {
+      "file": "app/src/app/threads/page.tsx",
+      "pattern": "alex",
+      "reason": "Legacy version 1 schema token required for compatibility with existing private data."
+    },
+    {
+      "file": "app/src/components/release.tsx",
+      "pattern": "alex",
+      "reason": "Legacy version 1 schema token required for compatibility with existing private data."
+    },
+    {
+      "file": "app/src/lib/decisions.ts",
+      "pattern": "alex",
+      "reason": "Legacy version 1 schema token required for compatibility with existing private data."
+    },
+    {
+      "file": "app/src/styles/shell.css",
+      "pattern": "alex",
+      "reason": "Legacy version 1 schema token required for compatibility with existing private data."
+    },
+    {
+      "file": "app/src/views/photo-time-cost-data.tsx",
+      "pattern": "alex",
+      "reason": "Legacy version 1 schema token required for compatibility with existing private data."
+    },
+    {
+      "file": "tools/test_export.py",
+      "pattern": "user@contact.test",
+      "reason": "Reserved .test domain in a synthetic scanner regression fixture."
+    },
+    {
+      "file": "kit.json",
+      "pattern": "user@contact.test",
+      "reason": "Documents a file-scoped public fixture or legacy schema exception."
+    }
+  ],
+  "copy": {
+    "kit/README.md": "README.md",
+    "kit/LICENSE": "LICENSE",
+    "kit/CHANGELOG.md": "CHANGELOG.md",
+    "guide/how-to-use.md": "kit/starter/guide/how-to-use.md"
+  },
+  "ignore_terms": [
+    {
+      "term": "portfolio",
+      "reason": "Ordinary portfolio terminology and shipped portfolio.py / holding/portfolio.json filenames."
+    },
+    {
+      "term": "read-in",
+      "reason": "Ordinary read-in operation/file terminology; not a project identity in the kit."
+    },
+    {
+      "term": "read(in)",
+      "reason": "Generic portable screenshot workflow example, not private project data."
+    }
+  ]
+}

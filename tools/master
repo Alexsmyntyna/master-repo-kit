@@ -1,0 +1,140 @@
+#!/bin/bash
+# Master Repo launcher. Starts the app if it isn't running, then opens it.
+#
+#   master              start (building first if the code changed) and open the browser
+#   master open <path>  open a page, e.g. master open threads
+#   master stop | restart | status | logs
+#   master init [dir] [--name NAME --email EMAIL --handle HANDLE]   initialize data
+#   master update       merge kit releases, migrate data, sync skills
+#   master migrate [--dry-run]   apply versioned data migrations
+#   master threads      list threads (anything else is passed to tools/converse.py,
+#                       e.g. master new camera-app "Title" --body "...", master run <thread>)
+#   master pulse | due  which projects are moving or abandoned; which need a check-in
+#   master checkin <slug>|--due [--run]   have a COO check a project's work and release path
+#   master schedule on|off|status         daily 7:30 refresh: snapshots, pulse, footprint, hygiene, recheck flags, cards, stale (launchd)
+#   master market-check <slug> [--run]   have a COO build or refresh the project's market file
+#   master market search|add|reviews|status ...   App Store apps, reviews and web pages of competitors
+#   master build plan|replan|approve|task|run|say|status ...   the project board: epics, tasks, coding agents
+#   master codebases scan|list           every codebase in ~/Documents/GitHub (notes: holding/codebases/BRIEF.md)
+#   master card refresh|show|board ...   project cards: goal, gates, blocker, next, footprint, hygiene, movement
+#   master board                         every card, what owes you or costs without moving first
+#   master footprint scan <slug>|--all [--probe]   hosting, database, payments, stores, domains (read-only)
+#   master hygiene scan <slug>|--all     stray files, agent-file size and pointer in each repo (read-only)
+#   master refresh [--commit] [--probe]  the daily no-agent chain: snapshot, pulse, footprint, hygiene, recheck flags, cards, stale
+#   master recheck scan|list|run ...     open questions the code moved past; run has a Sonnet agent recheck them
+#
+# Content (wiki pages, threads, JSON) is read live; a rebuild is only needed when app code changes.
+set -euo pipefail
+
+REPO="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
+APP="$REPO/app"
+PORT=3100
+URL="http://127.0.0.1:$PORT"
+# Data lives in MASTER_REPO_ROOT when set (see DATA.md), otherwise in this checkout. MASTER_REPO_ID names the log
+# folder and the check-in schedule, so a second install doesn't share them (app/src/lib/runs.ts derives the same).
+# Both can come from app/.env.local, as for the app; the shell's own values win, as they do in Next.js.
+if [ -f "$APP/.env.local" ]; then
+  while IFS='=' read -r key value; do
+    value="${value%\"}"; value="${value#\"}"
+    case "$key" in
+      MASTER_REPO_ROOT) [ -z "${MASTER_REPO_ROOT:-}" ] && export MASTER_REPO_ROOT="$value" ;;
+      MASTER_REPO_ID) [ -z "${MASTER_REPO_ID:-}" ] && export MASTER_REPO_ID="$value" ;;
+    esac
+  done < <(grep -E '^(MASTER_REPO_ROOT|MASTER_REPO_ID)=' "$APP/.env.local")
+fi
+DATA="${MASTER_REPO_ROOT:-$REPO}"
+ID="${MASTER_REPO_ID:-master-repo}"
+STATE="$HOME/Library/Logs/$ID"
+LOG="$STATE/server.log"
+PIDFILE="$STATE/server.pid"
+# Finder-launched apps get a bare PATH; add where node, python and the agent CLIs live.
+export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$PATH"
+mkdir -p "$STATE"
+
+running() { curl -s -o /dev/null --max-time 2 "$URL" ; }
+
+needs_build() {
+  [ ! -f "$APP/.next/BUILD_ID" ] && return 0
+  [ -n "$(find "$APP/src" "$APP/package.json" "$APP/next.config.ts" -newer "$APP/.next/BUILD_ID" -print -quit)" ]
+}
+
+start() {
+  if running; then return; fi
+  # Refresh which projects are moving (read-only git; a few seconds) for the app and the agents.
+  python3 "$REPO/tools/portfolio.py" pulse --quiet >>"$LOG" 2>&1 || true
+  cd "$APP"
+  [ -d node_modules ] || npm install >>"$LOG" 2>&1
+  if needs_build; then
+    echo "Building Master Repo (app code changed)…"
+    npm run build >>"$LOG" 2>&1 || { echo "Build failed, see $LOG"; exit 1; }
+  fi
+  echo "Starting Master Repo on $URL"
+  nohup npm run start >>"$LOG" 2>&1 &
+  echo $! >"$PIDFILE"
+  for _ in $(seq 1 40); do running && return; sleep 0.25; done
+  echo "Server didn't come up, see $LOG"; exit 1
+}
+
+LABEL="local.$ID.checkins"
+PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
+
+schedule() {
+  case "${1:-status}" in
+    on)
+      mkdir -p "$(dirname "$PLIST")"
+      cat >"$PLIST" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>$LABEL</string>
+  <key>ProgramArguments</key><array>
+    <string>/bin/bash</string><string>-lc</string>
+    <string>export PATH=/opt/homebrew/bin:/usr/local/bin:\$HOME/.local/bin:\$PATH; unset ANTHROPIC_API_KEY; export MASTER_REPO_ROOT="$DATA"; cd "$DATA" &amp;&amp; echo "== \$(date)" &amp;&amp; python3 "$REPO/tools/refresh.py" --commit</string>
+  </array>
+  <key>StartCalendarInterval</key><dict><key>Hour</key><integer>7</integer><key>Minute</key><integer>30</integer></dict>
+  <key>StandardOutPath</key><string>$STATE/checkins.log</string>
+  <key>StandardErrorPath</key><string>$STATE/checkins.log</string>
+</dict></plist>
+EOF
+      launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
+      launchctl bootstrap "gui/$(id -u)" "$PLIST"
+      echo "Refresh runs daily at 7:30: snapshots, pulse, footprint, hygiene, cards, stale marking; commits to main. Log: $STATE/checkins.log" ;;
+    off)
+      launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
+      rm -f "$PLIST"
+      echo "Scheduled check-ins off." ;;
+    *) launchctl print "gui/$(id -u)/$LABEL" >/dev/null 2>&1 && echo "On: daily 7:30. Log: $STATE/checkins.log" || echo "Off." ;;
+  esac
+}
+
+stop() {
+  # Only whatever listens on Master Repo's port; other Next.js projects are left alone.
+  lsof -ti "tcp:$PORT" -sTCP:LISTEN | xargs kill 2>/dev/null || true
+  rm -f "$PIDFILE"
+  echo "Stopped."
+}
+
+case "${1:-}" in
+  "") start; open "$URL" ;;
+  open) start; open "$URL/${2:-}" ;;
+  stop) stop ;;
+  restart) stop; sleep 1; start; open "$URL" ;;
+  status) running && echo "Running at $URL" || echo "Not running" ;;
+  logs) tail -n 50 -f "$LOG" ;;
+  init|update|migrate) command="$1"; shift; python3 "$REPO/tools/$command.py" "$@" ;;
+  threads) python3 "$REPO/tools/converse.py" list ;;
+  pulse|due|checkin|apply) python3 "$REPO/tools/portfolio.py" "$@" ;;
+  market) shift; python3 "$REPO/tools/market.py" "$@" ;;
+  build) shift; python3 "$REPO/tools/build.py" "$@" ;;
+  codebases) shift; python3 "$REPO/tools/codebases.py" "$@" ;;
+  rules) shift; python3 "$REPO/tools/rules.py" "$@" ;;
+  card) shift; python3 "$REPO/tools/card.py" "$@" ;;
+  board) python3 "$REPO/tools/card.py" board ;;
+  footprint) shift; python3 "$REPO/tools/footprint.py" "$@" ;;
+  hygiene) shift; python3 "$REPO/tools/hygiene.py" "$@" ;;
+  refresh) shift; python3 "$REPO/tools/refresh.py" "$@" ;;
+  recheck) shift; python3 "$REPO/tools/recheck.py" "$@" ;;
+  schedule) schedule "${2:-status}" ;;
+  -h|--help|help) sed -n 2,26p "$0" | sed 's/^# \{0,1\}//' ;;
+  *) python3 "$REPO/tools/converse.py" "$@" ;;
+esac

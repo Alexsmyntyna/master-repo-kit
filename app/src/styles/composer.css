@@ -1,0 +1,133 @@
+/* The new-thread composer and a thread's Reply box (components/composer.tsx).
+   One column, top to bottom: mode, fields, the message box with its attachments, then one row of options and send.
+   Nothing is positioned over anything else; the @ path list opens in the flow under the text. */
+
+.cmp { display: grid; gap: 18px; min-width: 0; }
+.cmp.is-reply { margin: 0 0 32px; padding: 22px 24px 20px; border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--line-soft); }
+.cmp-reply-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.cmp-reply-head h2 { font-size: var(--t-lg); letter-spacing: -0.015em; }
+
+.cmp-label { display: block; font-size: var(--t-sm); font-weight: 500; color: var(--text-2); }
+.cmp-label-note { font-weight: 400; color: var(--muted); }
+.cmp-hint { font-size: var(--t-sm); color: var(--muted); }
+
+/* mode */
+.cmp-mode { display: flex; align-items: center; gap: 8px 16px; flex-wrap: wrap; }
+
+/* About + Subject */
+.cmp-fields { display: grid; grid-template-columns: minmax(180px, 260px) minmax(0, 1fr); gap: 14px; }
+.cmp-field { display: grid; gap: 6px; min-width: 0; }
+.cmp-field input, .cmp-field select {
+  width: 100%; min-width: 0; height: 40px; padding: 0 12px; border-radius: var(--r-md);
+  background: var(--bg-sunk); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: var(--t-md);
+}
+.cmp-field select { padding-right: 8px; }
+.cmp-field select option, .cmp-field select optgroup { background: var(--surface); }
+.cmp-field input::placeholder { color: var(--faint); }
+.cmp-field input:focus, .cmp-field select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.is-reply .cmp-field { grid-template-columns: 72px minmax(0, 1fr); align-items: center; gap: 12px; }
+.is-reply .cmp-field input { height: 36px; background: var(--bg); }
+@media (max-width: 640px) {
+  .cmp-fields { grid-template-columns: 1fr; }
+  .is-reply .cmp-field { grid-template-columns: 1fr; gap: 6px; }
+}
+
+/* Also about */
+.cmp-also { display: grid; gap: 8px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.cmp-also > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.cmp-pill {
+  display: inline-flex; align-items: center; gap: 7px; padding: 4px 11px 4px 9px; border-radius: var(--r-md); cursor: pointer;
+  font-size: var(--t-sm); color: var(--text-2); border: 1px solid var(--line);
+}
+.cmp-pill:hover { border-color: var(--muted); color: var(--text); }
+.cmp-pill:has(input:checked) { border-color: var(--accent); color: var(--text); background: var(--accent-soft); }
+.cmp-pill input { margin: 0; accent-color: var(--accent); }
+
+/* segmented choice */
+.cmp-seg { display: inline-flex; flex-wrap: nowrap; gap: 2px; padding: 3px; border-radius: var(--r-md); background: var(--bg-sunk); border: 1px solid var(--line); }
+.cmp-seg label {
+  position: relative; padding: 5px 12px; border-radius: var(--r-sm); cursor: pointer; white-space: nowrap;
+  font-size: var(--t-sm); color: var(--muted);
+}
+.cmp-seg label:hover { color: var(--text); }
+.cmp-seg label.is-on { background: var(--raised); color: var(--text); font-weight: 500; box-shadow: inset 0 0 0 1px var(--line); }
+.cmp-seg input { position: absolute; opacity: 0; pointer-events: none; }
+.cmp-seg label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* the message box */
+.cmp-message {
+  display: grid; min-width: 0; border-radius: var(--r-lg); background: var(--bg-sunk); border: 1px solid var(--line);
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.is-reply .cmp-message { background: var(--bg); }
+.cmp-message:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.cmp-message textarea {
+  display: block; width: 100%; min-height: 150px; padding: 14px 16px; resize: vertical; border: 0; outline: none;
+  background: transparent; color: var(--text); font: 400 17px/1.6 var(--serif);
+}
+.cmp-message textarea::placeholder { font-family: var(--sans); font-size: var(--t-md); color: var(--faint); }
+
+/* compact (the chat dock): one bordered field, a growing textarea over one row of quiet icon buttons */
+.cmp-message textarea.is-growing { min-height: 0; resize: none; overflow-y: hidden; }
+.cmp-tools.is-compact { flex-wrap: nowrap; gap: 2px; padding: 4px 6px 6px; border-top: 0; }
+.cmp-icon {
+  display: inline-grid; place-items: center; flex: none; width: 32px; height: 32px; padding: 0; border: 0;
+  border-radius: var(--r-md); background: none; color: var(--muted); font-size: var(--t-xs); cursor: pointer; white-space: nowrap;
+}
+.cmp-icon:hover, .cmp-icon[aria-expanded="true"] { color: var(--text); background: var(--hover); }
+.cmp-icon:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.cmp-icon.is-text { width: auto; padding: 0 9px; }
+.cmp-tools-end { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; }
+
+/* @ path suggestions, in the flow */
+.cmp-suggest { margin: 0 10px 8px; border-radius: var(--r-md); background: var(--surface); border: 1px solid var(--line); overflow: hidden; }
+.cmp-suggest ul { list-style: none; margin: 0; padding: 4px; display: grid; gap: 1px; max-height: 240px; overflow-y: auto; }
+.cmp-suggest li { display: flex; align-items: center; border-radius: var(--r-sm); }
+.cmp-suggest li.is-on, .cmp-suggest li:hover { background: var(--raised); }
+.cmp-suggest button { border: 0; background: none; cursor: pointer; }
+.cmp-suggest-path {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 6px 8px; text-align: left;
+  font: var(--t-sm) var(--mono); color: var(--text-2);
+}
+.cmp-suggest-path span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmp-suggest li.is-on .cmp-suggest-path { color: var(--text); }
+.cmp-suggest-add { flex: none; padding: 6px 10px; font-size: var(--t-xs); color: var(--accent); }
+.cmp-suggest p { padding: 6px 12px; border-top: 1px solid var(--line-soft); font-size: var(--t-xs); color: var(--faint); }
+
+/* attached paths and files */
+.cmp-attached { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px 10px; }
+.cmp-chip {
+  display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-width: 0; padding: 3px 4px 3px 8px;
+  border-radius: var(--r-sm); background: var(--raised); font-size: var(--t-xs); color: var(--text-2);
+}
+.cmp-chip > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 420px; }
+.cmp-chip img { width: 22px; height: 22px; object-fit: cover; border-radius: var(--r-sm); }
+.cmp-chip button { display: grid; place-items: center; padding: 2px; border: 0; border-radius: var(--r-sm); background: none; color: var(--muted); cursor: pointer; }
+.cmp-chip button:hover { color: var(--text); background: var(--hover); }
+
+/* the box's bottom bar */
+.cmp-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 8px 10px; border-top: 1px solid var(--line-soft); }
+.cmp-tool {
+  display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: var(--r-sm);
+  border: 1px solid var(--line); background: none; font-size: var(--t-xs); color: var(--text-2); cursor: pointer; white-space: nowrap;
+}
+.cmp-tool:hover { color: var(--text); border-color: var(--muted); }
+.cmp-tool.is-repo { border-style: dashed; color: var(--muted); }
+.cmp-count { margin-left: auto; display: inline-flex; align-items: center; gap: 14px; font-size: var(--t-xs); color: var(--faint); white-space: nowrap; }
+.cmp-count kbd { font: 500 var(--t-xs) var(--mono); padding: 0 4px; border-radius: var(--r-sm); background: var(--raised); color: var(--text-2); }
+.cmp-count .is-over { color: var(--attention); }
+@media (max-width: 720px) { .cmp-tip { display: none; } }
+
+/* options and send */
+.cmp-foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px 24px; flex-wrap: wrap; }
+.cmp-options { display: flex; align-items: flex-end; gap: 14px 22px; flex-wrap: wrap; min-width: 0; }
+.cmp-opt { display: grid; gap: 6px; }
+.cmp-checks { display: flex; gap: 6px 18px; flex-wrap: wrap; padding-bottom: 7px; }
+.cmp-check { display: inline-flex; align-items: center; gap: 8px; font-size: var(--t-sm); color: var(--text-2); cursor: pointer; white-space: nowrap; }
+.cmp-check input { margin: 0; width: 15px; height: 15px; accent-color: var(--accent); }
+.cmp-send { display: flex; align-items: center; gap: 12px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
+.cmp-send .button { height: 38px; padding: 0 18px; font-size: var(--t-sm); }
+.cmp-status { font-size: var(--t-sm); color: var(--muted); }
+.cmp-status.is-error { color: var(--risk); }
+.cmp-status.is-done { color: var(--ok); }
+

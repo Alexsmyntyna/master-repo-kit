@@ -1,0 +1,82 @@
+/* A decision waiting on the owner (components/decision-card.tsx, decision-form.tsx): a card with the ask, its options as a
+   trade-off table, and a separate lane for changing direction. Used on Decisions and on a thread's page. */
+
+.decision-list { display: grid; gap: 12px; }
+/* break-word, not anywhere: `anywhere` lets every shrinkable flex item (a fold's summary, a state word) fall to one
+   letter wide, which is how "Reasoning" broke into "Reasonin / g". */
+.decision-card {
+  display: grid; gap: 10px; padding: 16px 20px; border-radius: var(--r-lg); min-width: 0; overflow-wrap: break-word;
+  background: var(--surface); border: 1px solid var(--line-soft);
+}
+.decision-card.is-stale { border-color: color-mix(in srgb, var(--attention) 45%, transparent); }
+.decision-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.decision-head h2 { font-size: var(--t-lg); font-weight: 600; line-height: 1.3; letter-spacing: -0.01em; }
+.decision-head .state-word { flex: none; font-size: var(--t-sm); }
+.decision-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: var(--t-xs); }
+.decision-meta .meta { font-size: var(--t-xs); }
+.decision-meta .meta strong { color: var(--text-2); font-weight: 500; }
+.decision-proposal { color: var(--text-2); font-size: var(--t-sm); max-width: var(--measure); margin-top: -4px; }
+.decision-proposal.is-clamped { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.decision-revisit { font-size: var(--t-xs); color: var(--muted); }
+.decision-revisit b { color: var(--text-2); font-weight: 600; margin-right: 4px; }
+.decision-done { padding: 12px 0; font-size: var(--t-md); }
+.decision-form { display: grid; gap: 10px; }
+.decision-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.decision-actions .button { padding: 6px 12px; font-size: var(--t-sm); }
+.decision-actions .steer-open { margin-left: 8px; }
+.decision-card .fold-line { margin-top: -2px; }
+.decision-actions input {
+  flex: 1 1 240px; min-width: 0; padding: 9px 12px; border-radius: var(--r-md);
+  background: var(--bg-sunk); border: 1px solid var(--line); color: var(--text);
+}
+
+/* the options, side by side */
+/* hairline rows like a DataTable, not a box inside the card */
+.tradeoffs { display: grid; }
+.tradeoff-row {
+  display: grid; grid-template-columns: minmax(180px, 2.2fr) minmax(120px, 1.3fr) 110px 110px minmax(140px, 1.8fr) auto;
+  gap: 14px; align-items: center; padding: 10px 0; font-size: var(--t-sm); border-top: 1px solid var(--line-soft);
+}
+.tradeoff-head { border-top: 0; font-size: var(--t-xs); font-weight: 500; color: var(--faint); padding-block: 4px 6px; }
+.tradeoff-row.is-recommended .tradeoff-option > span { color: var(--text); }
+.tradeoff-option { display: flex; gap: 10px; align-items: flex-start; }
+.tradeoff-option > span { display: grid; gap: 2px; }
+.option-key {
+  flex: none; display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: var(--r-sm);
+  font: 600 12px var(--mono); background: var(--raised); color: var(--text-2);
+}
+.is-recommended .option-key { background: var(--accent); color: var(--bg); }
+.recommended-tag { font: 11px var(--sans); color: var(--accent); }
+.tradeoff-costs { color: var(--text-2); font-size: var(--t-xs); }
+.tradeoff-row .button { padding: 7px 12px; }
+.time-cell { display: grid; gap: 4px; font-size: var(--t-xs); }
+.time-bar { display: block; height: 6px; border-radius: var(--r-lg); background: var(--bg-sunk); overflow: hidden; }
+.time-bar i { display: block; height: 100%; border-radius: inherit; background: var(--accent); }
+.pips { display: inline-flex; align-items: center; gap: 3px; font-size: var(--t-xs); color: var(--text-2); }
+.pips i { width: 9px; height: 9px; border-radius: var(--r-sm); background: var(--raised); }
+.pips span { margin-left: 5px; }
+.pips-cost-1 i.on, .pips-good-3 i.on { background: var(--ok); }
+.pips-cost-2 i.on, .pips-good-2 i.on { background: var(--attention); }
+.pips-cost-3 i.on, .pips-good-1 i.on { background: var(--risk); }
+@media (max-width: 900px) {
+  .tradeoff-head { display: none; }
+  .tradeoff-row { grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+  .tradeoff-option, .tradeoff-costs { grid-column: 1 / -1; }
+  .tradeoff-row [data-label]::before { content: attr(data-label); display: block; font: 11px var(--sans); color: var(--faint); }
+}
+
+/* changing direction: its own lane, separate from approving */
+.steer { display: grid; gap: 8px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+.steer-label { font: 500 11px/1.4 var(--sans); color: var(--muted); }
+.steer textarea {
+  width: 100%; resize: vertical; padding: 10px 12px; border-radius: var(--r-md); line-height: 1.5;
+  background: var(--bg-sunk); border: 1px solid var(--line); color: var(--text);
+}
+.steer textarea:focus { border-color: var(--accent); outline: none; }
+.steer-open {
+  justify-self: start; padding: 0; border: 0; background: none; cursor: pointer;
+  font-size: var(--t-sm); color: var(--muted); text-decoration: underline; text-decoration-color: var(--line);
+  text-underline-offset: 3px;
+}
+.steer-open:hover { color: var(--text); text-decoration-color: currentColor; }
+.decision-card .fold-body { --measure: 44rem; } /* lead and body on one edge (see messages.css) */

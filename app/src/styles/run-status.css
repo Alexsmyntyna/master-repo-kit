@@ -1,0 +1,25 @@
+/* A thread's run state (components/run-status.tsx): one hairline strip, an icon, two lines and an action. */
+
+.rs {
+  display: flex; align-items: center; gap: 12px; margin: 0 0 20px; padding: 12px 14px;
+  border-radius: var(--r-md); border: 1px solid var(--line-soft); background: var(--bg);
+}
+.rs > svg { flex: none; color: var(--muted); }
+.rs-text { display: grid; gap: 1px; flex: 1; min-width: 0; }
+.rs-text strong { font-size: var(--t-sm); font-weight: 500; color: var(--text); }
+.rs-text > span { font-size: var(--t-xs); color: var(--muted); overflow-wrap: anywhere; }
+.rs.is-live { border-color: color-mix(in srgb, var(--ok) 30%, transparent); }
+.rs.is-live > svg { color: var(--ok); }
+.rs.is-failed { border-color: color-mix(in srgb, var(--risk) 35%, transparent); }
+.rs.is-failed > svg, .rs.is-failed .rs-text strong { color: var(--risk); }
+.rs.is-idle { border-style: dashed; border-color: var(--line); }
+.rs.is-waiting { border-style: dashed; border-color: var(--line); }
+@media (max-width: 640px) { .rs { flex-wrap: wrap; } }
+
+.rs-form { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rs-form .button { padding: 7px 13px; font-size: var(--t-sm); }
+.rs-error { font-size: var(--t-sm); color: var(--risk); }
+/* the dock's "Retry now" beside "Limit reached · retrying at …" (components/dock/dock-messages.tsx) */
+.dock-retry { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dock-status.is-waiting { flex-wrap: wrap; }
+.rs-done { font-size: var(--t-sm); color: var(--ok); }

@@ -1,0 +1,27 @@
+{
+  "entries": [
+    {
+      "id": "release",
+      "title": "Review release",
+      "kind": "due",
+      "date": "2026-10-28",
+      "project": "finance-app"
+    },
+    {
+      "id": "review",
+      "title": "Monthly review",
+      "kind": "check",
+      "cadence": "monthly",
+      "last_done": "2026-10-01"
+    },
+    {
+      "id": "work",
+      "title": "Implement import",
+      "kind": "block",
+      "date": "2026-10-29",
+      "time": "09:00",
+      "end": "10:00",
+      "type": "build"
+    }
+  ]
+}

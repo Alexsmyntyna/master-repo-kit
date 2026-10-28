@@ -1,0 +1,42 @@
+/* Small instruments shared by the board, the project card and the timeline: GateMeter, Sparkline, OwesBadges,
+   KindChip, OlderTag, and Voiced (a line in its source's voice). Loaded once by the root layout. */
+
+/* a line in its source's voice (provenance.tsx Voiced) */
+.voiced { color: var(--text); }
+.voiced.voice-owner { font: 400 17px/1.45 var(--serif); }
+.voiced.voice-code { font-family: var(--mono); font-size: var(--t-xs); }
+
+/* finish line: a square-cornered chip; dashed while only an agent has proposed it */
+.kind-chip {
+  flex: none; display: inline-block; padding: 0 5px; border-radius: var(--r-sm); border: 1px solid var(--line-strong);
+  font-size: var(--t-2xs); font-weight: 500; line-height: 16px; color: var(--text-2); white-space: nowrap;
+}
+.kind-chip.is-proposed { border-style: dashed; color: var(--muted); }
+
+/* gates: one segment each, done filled, open hollow, unknown dashed, then done/total */
+.gate-meter { display: inline-flex; align-items: center; gap: var(--s-2); font-size: var(--t-xs); color: var(--text-2); }
+.gate-bar { display: inline-flex; gap: 2px; }
+.gate-bar i { width: 7px; height: 9px; border-radius: 1px; box-sizing: border-box; }
+.gate-bar .g-done { background: var(--ok); }
+.gate-bar .g-open { border: 1px solid var(--muted); }
+.gate-bar .g-unknown { border: 1px dashed var(--faint); }
+.gate-count { min-width: 2.4em; }
+
+/* commits per week: columns on a baseline; this week brightest */
+.spark { display: block; overflow: visible; }
+.spark .spark-bar { fill: var(--ink-7); }
+.spark .spark-now { fill: var(--accent); }
+.spark .spark-zero { fill: var(--line-strong); }
+.spark .spark-unknown { fill: var(--faint); opacity: 0.6; }
+.spark-none { color: var(--faint); font-size: var(--t-xs); }
+
+/* what's waiting on the owner: verbs with counts */
+.owes { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; gap: 2px var(--s-3); font-size: var(--t-xs); color: var(--muted); }
+.owe { white-space: nowrap; }
+.owe b { font-weight: 600; color: var(--text-2); }
+.owe.is-yours { color: var(--attention); }
+.owe.is-yours b { color: var(--attention); }
+.project-card .owes { justify-content: flex-start; font-size: var(--t-sm); }
+
+/* superseded */
+.older-tag { font-size: var(--t-2xs); color: var(--faint); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 0 4px; line-height: 15px; }

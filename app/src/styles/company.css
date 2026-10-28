@@ -1,0 +1,58 @@
+/* The parent company's area (/company): the owner's quotes, the setup checklist, the money table. */
+
+/* the owner's words on the home page: their voice (sand rule, serif), as <Said> sets them */
+.company-words .prose blockquote {
+  margin: 0 0 22px; padding-left: 16px; border-left: 2px solid var(--owner); background: none;
+  font: 400 18px/1.55 var(--serif); color: var(--text);
+}
+.company-words .prose > p { font-size: var(--t-sm); color: var(--muted); }
+.company-others { margin-top: 26px; }
+
+/* Setup: a box per step; done steps sink to the bottom of their group, muted */
+.setup-step .row-lead { padding-top: 2px; }
+.step-check { display: inline-flex; align-items: center; gap: 8px; }
+.step-check input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); cursor: pointer; }
+.step-check input:disabled { cursor: progress; }
+.setup-step.is-done .row-title { color: var(--faint); font-weight: 400; text-decoration: line-through; text-decoration-color: var(--line); }
+.setup-step.is-done .meta { opacity: 0.7; }
+.step-blocked { color: var(--muted); }
+.step-by-agent { color: var(--muted); }
+.step-src { color: var(--faint); }
+a.step-src:hover { color: var(--accent); }
+
+/* Money: the products table is one form with one Save under it */
+.money-today { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 14px; font-size: var(--t-lg); color: var(--text); }
+.company-money > .said-block { margin-bottom: 30px; }
+.money-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px; }
+.amount { display: grid; gap: 6px; font-size: var(--t-xs); color: var(--muted); }
+.amount-input {
+  display: inline-flex; align-items: center; gap: 4px; height: 34px; padding: 0 10px; width: 150px;
+  border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--bg);
+}
+.amount-input:focus-within { border-color: var(--accent); }
+.amount-input i { font-style: normal; color: var(--faint); }
+.amount-input input {
+  width: 100%; border: 0; padding: 0; background: none; outline: none; color: var(--text);
+  font: inherit; font-size: var(--t-sm); font-variant-numeric: tabular-nums; text-align: right;
+}
+/* A narrow main column (the chat dock open) scrolls the table sideways rather than running under the dock */
+.money-table { display: grid; overflow-x: auto; padding: 0 10px; margin: 0 -10px; }
+.money-row {
+  display: grid; grid-template-columns: minmax(130px, 0.8fr) minmax(200px, 1.6fr) 92px 120px 120px; gap: 16px;
+  min-width: 720px;
+  align-items: center; padding: 10px; margin: 0 -10px; border-radius: var(--r-md); font-size: var(--t-sm);
+}
+.money-row + .money-row { box-shadow: 0 -1px 0 var(--line-soft); }
+.money-head { font-size: var(--t-xs); color: var(--faint); padding-top: 0; }
+.money-head .num { text-align: right; }
+.money-row .amount > span:first-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.money-row .amount-input { width: 100%; height: 30px; }
+.money-model { display: grid; gap: 2px; color: var(--text-2); line-height: 1.45; }
+.money-model small { font-size: var(--t-xs); color: var(--faint); }
+.money-foot { position: sticky; left: 0; display: flex; align-items: center; gap: 12px; padding: 12px 0 0; box-shadow: 0 -1px 0 var(--line-soft); }
+
+@media (max-width: 900px) {
+  .money-row { grid-template-columns: 1fr 1fr; min-width: 0; }
+  .money-head { display: none; }
+  .money-model { grid-column: 1 / -1; }
+}

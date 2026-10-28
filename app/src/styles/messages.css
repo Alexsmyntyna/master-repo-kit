@@ -1,0 +1,107 @@
+/* Messages in a thread (components/thread-view.tsx): the newest one open as the page's centre, earlier ones as
+   hairline rows that open in place, and the CEO's questions to COOs as rows under a message. */
+
+.role-owner { --role: var(--owner); }
+.role-ceo, .role-coo { --role: var(--agent); }
+
+/* the thread page around them: it takes main's full width like every page; prose keeps its own measure */
+.thread-hero { display: grid; gap: 12px; justify-items: start; padding-bottom: 20px; }
+.thread-hero:empty { display: none; }
+.thread-decision { font-size: var(--t-md); padding: 2px 0 2px 14px; border-left: 2px solid var(--attention); color: var(--text-2); }
+.thread-decision strong { color: var(--text); font-weight: 600; }
+.thread-decision.ts-decided { border-left-color: var(--ok); }
+.thread-superseded { padding: 10px 14px; border-radius: var(--r-md); background: var(--bg-sunk); border: 1px solid var(--line-soft); color: var(--text-2); font-size: var(--t-sm); }
+.thread-superseded a { color: var(--accent); }
+/* the decision's actions: a row at the end of the message, no box of their own inside the message card */
+.latest-decide { display: grid; gap: 12px; padding-top: 4px; }
+.latest-decide h3 { font-size: var(--t-lg); max-width: var(--measure); }
+.history { margin-top: 30px; }
+.history-head { font-size: var(--t-sm); font-weight: 600; margin-bottom: 12px; }
+
+/* who wrote it, to whom */
+.msg-who { display: inline-flex; align-items: baseline; gap: 6px; min-width: 0; white-space: nowrap; }
+.role-name { display: inline-flex; align-items: center; gap: 6px; font-size: var(--t-sm); font-weight: 500; color: var(--text); }
+.role-name::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: 2px; background: var(--role); transform: translateY(-1px); }
+.msg-who .src-auto { font-size: var(--t-sm); }
+.msg-to { font-size: var(--t-sm); color: var(--muted); }
+.msg-kind { font-size: var(--t-xs); color: var(--muted); }
+.msg-kind.kind-decision, .msg-kind.kind-approval { color: var(--ok); }
+.msg-date { font-size: var(--t-xs); color: var(--faint); }
+
+/* the newest message: the one unit of work on the page, so it may be a card.
+   One reading measure for the title, the lead and the body: `--measure` is 68ch, and ch resolves at each element's own
+   font size, so a 24px title, an 18.5px lead and 15.5px prose each got a different width. A fixed length here gives
+   them one edge (about 68ch of body text). Tables may run past it. break-word, not anywhere: `anywhere` lets
+   shrinkable flex items collapse to one letter wide. */
+.msg-latest, .msg-body { --measure: 44rem; }
+.msg-latest .prose, .msg-body .prose { max-width: none; }
+.msg-latest .prose > :not(.table-scroll), .msg-body .prose > :not(.table-scroll) { max-width: var(--measure); }
+.msg-latest .prose table, .msg-body .prose table { width: auto; min-width: min(100%, var(--measure)); }
+.msg-latest {
+  display: grid; gap: 16px; min-width: 0; margin: 8px 0 32px; padding: 24px 28px 18px;
+  border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--line-soft); overflow-wrap: break-word;
+  scroll-margin-top: 80px;
+}
+.msg-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; font-size: var(--t-sm); }
+.msg-line .msg-date { margin-left: auto; }
+.msg-subject { font-size: var(--t-xl); line-height: 1.25; letter-spacing: -0.02em; max-width: var(--measure); text-wrap: pretty; }
+.msg-subject.is-small { font-size: var(--t-lg); }
+.msg-latest .said-body .prose, .msg .said-body .prose { font: 400 18px/1.6 var(--serif); color: var(--text); }
+@media (max-width: 640px) { .msg-latest { padding: 18px; } }
+
+/* earlier messages: a plain list of rows */
+.msg-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.msg-row { list-style: none; min-width: 0; }
+.msg-row + .msg-row { border-top: 1px solid var(--line-soft); }
+.msg { min-width: 0; scroll-margin-top: 80px; overflow-wrap: break-word; }
+.msg-sum {
+  display: grid; grid-template-columns: 34px 150px minmax(0, 1fr) auto; gap: 14px; align-items: baseline;
+  padding: 11px 10px; margin: 0 -10px; border-radius: var(--r-md); cursor: pointer; list-style: none; font-size: var(--t-sm);
+}
+.msg-sum::-webkit-details-marker { display: none; }
+.msg-sum:hover { background: var(--surface); }
+.msg-n { font-size: var(--t-xs); color: var(--faint); }
+.msg-sum .msg-who { overflow: hidden; }
+.msg-preview { display: flex; gap: 8px; min-width: 0; overflow: hidden; white-space: nowrap; color: var(--muted); }
+.msg-preview strong { flex: none; max-width: 50%; overflow: hidden; text-overflow: ellipsis; font-weight: 500; color: var(--text-2); }
+.msg-preview span { overflow: hidden; text-overflow: ellipsis; }
+.msg.is-said .msg-preview span { font: 400 15.5px/1.4 var(--serif); color: var(--text-2); }
+.msg-meta { display: inline-flex; gap: 12px; align-items: baseline; font-size: var(--t-xs); color: var(--faint); white-space: nowrap; }
+.msg[open] > .msg-sum { background: none; }
+.msg[open] > .msg-sum .msg-preview { visibility: hidden; }
+.msg:target > .msg-sum { background: var(--surface); }
+.msg-body { display: grid; gap: 16px; min-width: 0; padding: 4px 0 26px 48px; }
+@media (max-width: 760px) {
+  .msg-sum { grid-template-columns: 30px minmax(0, 1fr) auto; }
+  .msg-preview { grid-column: 2 / -1; }
+  .msg-body { padding-left: 0; }
+}
+
+/* attachments and what the turn cost */
+.msg-attachments { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
+.msg-image img { display: block; height: 140px; border-radius: var(--r-md); border: 1px solid var(--line-soft); }
+.msg-file { padding: 3px 8px; border-radius: var(--r-sm); background: var(--raised); font-size: var(--t-xs); color: var(--text-2); }
+.msg-usage { justify-self: end; font-size: var(--t-xs); color: var(--faint); cursor: default; }
+
+/* the CEO's questions to COOs before it wrote */
+.consults { display: grid; gap: 4px; min-width: 0; padding-left: 14px; border-left: 2px solid color-mix(in srgb, var(--agent) 35%, transparent); }
+.consults-head { font-size: var(--t-sm); color: var(--muted); }
+.consults-list { display: grid; }
+.consult { min-width: 0; }
+.consult + .consult { border-top: 1px solid var(--line-soft); }
+.consult > summary {
+  display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 4px 16px; align-items: baseline;
+  padding: 9px 8px; margin: 0 -8px; border-radius: var(--r-md); cursor: pointer; list-style: none; font-size: var(--t-sm);
+}
+.consult > summary::-webkit-details-marker { display: none; }
+.consult > summary:hover { background: var(--surface); }
+.consult-who { display: grid; gap: 1px; min-width: 0; }
+.consult-who .role-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.consult-state { font-size: var(--t-xs); color: var(--faint); padding-left: 12px; }
+.consult.is-running .consult-state { color: var(--ok); }
+.consult.is-failed .consult-state { color: var(--risk); }
+.consult-q { color: var(--text-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.consult[open] .consult-q { display: block; color: var(--text); }
+.consult-body { padding: 6px 0 18px; }
+.consult-error { font-size: var(--t-sm); color: var(--risk); }
+@media (max-width: 640px) { .consult > summary { grid-template-columns: 1fr; } }

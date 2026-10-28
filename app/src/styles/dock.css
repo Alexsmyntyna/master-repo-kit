@@ -1,0 +1,173 @@
+/* The chat dock (components/dock/): a round button bottom right, and a panel over the right edge of the page.
+   The panel stays mounted when closed (moved off screen, inert) so a reply can land while it's shut. */
+
+.dock-fab {
+  position: fixed; right: 22px; bottom: 22px; z-index: 40; display: grid; place-items: center;
+  width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--line);
+  background: var(--raised); color: var(--accent); cursor: pointer;
+  box-shadow: 0 10px 28px rgb(0 0 0 / 0.35); transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.dock-fab:hover { transform: scale(1.06); border-color: var(--accent); }
+.dock-fab.is-hidden { opacity: 0; pointer-events: none; }
+.dock-fab.is-busy::after {
+  content: ""; position: absolute; top: 4px; right: 4px; width: 9px; height: 9px; border-radius: 50%;
+  background: var(--ok); border: 2px solid var(--raised); animation: pulse-dot 1.4s ease-in-out infinite;
+}
+
+.dock {
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 50; width: min(var(--dock-w, 440px), 100vw);
+  display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto;
+  background: var(--bg-sunk); border-left: 1px solid var(--line); box-shadow: -20px 0 50px rgba(0, 0, 0, 0.4);
+  transform: translateX(100%); visibility: hidden;
+  transition: transform 0.22s ease, visibility 0s linear 0.22s;
+}
+.dock.is-open { transform: none; visibility: visible; transition: transform 0.22s ease; }
+
+/* Resize: drag the left edge (components/dock/dock.tsx clamps 360px to 60% of the window). */
+.dock-grip { position: absolute; top: 0; bottom: 0; left: -3px; z-index: 2; width: 7px; cursor: col-resize; }
+.dock-grip::after { content: ""; position: absolute; top: 0; bottom: 0; left: 3px; width: 1px; background: transparent; transition: background 0.15s; }
+.dock-grip:hover::after, .is-resizing-dock .dock-grip::after { width: 2px; left: 2px; background: var(--accent); }
+.is-resizing-dock, .is-resizing-dock * { cursor: col-resize !important; user-select: none; }
+.is-resizing-dock .dock { transition: none; }
+
+/* Full screen: covers the page but not the sidebar; the conversation sits at a reading measure. */
+.dock.is-full { left: 224px; width: auto; box-shadow: none; }
+.dock.is-full .dock-head,
+.dock.is-full .dock-context,
+.dock.is-full .dock-list,
+.dock.is-full .dock-form { padding-left: max(20px, calc((100% - var(--measure)) / 2)); padding-right: max(20px, calc((100% - var(--measure)) / 2)); }
+.dock.is-full .dock-commands, .dock.is-full .dock-models { left: max(16px, calc((100% - var(--measure)) / 2)); right: max(16px, calc((100% - var(--measure)) / 2)); }
+@media (max-width: 900px) {
+  .dock.is-full { left: 0; }
+}
+
+.dock-head { display: flex; align-items: center; gap: 6px; padding: 14px 14px 10px 20px; }
+.dock-head h2 { flex: 1; font-size: var(--t-md); font-weight: 600; letter-spacing: -0.01em; }
+.dock-icon {
+  flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: var(--r-md);
+  border: 1px solid transparent; background: none; color: var(--muted); cursor: pointer;
+}
+.dock-icon:hover, .dock-icon[aria-expanded="true"] { color: var(--text); border-color: var(--line-soft); background: var(--hover); }
+
+.dock-context { padding: 0 20px 12px; border-bottom: 1px solid var(--line-soft); }
+.dock-chip {
+  display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 3px 4px 3px 10px;
+  border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); font-size: var(--t-xs); color: var(--text-2);
+}
+.dock-chip i { flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.dock-chip b { font-weight: 600; color: var(--text); white-space: nowrap; }
+.dock-chip b::after { content: "·"; margin-left: 6px; color: var(--faint); font-weight: 400; }
+.dock-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dock-chip button {
+  flex: none; display: grid; place-items: center; width: 20px; height: 20px; border: 0; border-radius: 50%;
+  background: none; color: var(--muted); cursor: pointer;
+}
+.dock-chip button:hover { color: var(--text); background: var(--hover); }
+.dock-chip.is-off { border-style: dashed; background: none; }
+.dock-chip.is-off i { background: var(--idle); }
+.dock-chip.is-off span { color: var(--faint); }
+
+.dock-list {
+  overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; padding: 4px 20px 16px;
+  display: grid; grid-template-columns: minmax(0, 1fr); align-content: start;
+}
+/* Nothing is wider than the panel: prose wraps, paths break, code blocks and tables scroll inside themselves. */
+.dock-msg > *, .dock-brief > * { min-width: 0; max-width: 100%; }
+.dock .prose { max-width: none; overflow-wrap: anywhere; }
+.dock .prose code, .dock .file-link, .dock .file-link code { overflow-wrap: anywhere; word-break: break-word; white-space: normal; }
+.dock .prose pre { max-width: 100%; overflow-x: auto; }
+.dock .prose pre code { white-space: pre; overflow-wrap: normal; word-break: normal; }
+.dock .table-scroll { max-width: 100%; overflow-x: auto; }
+.dock .prose th, .dock .prose td { overflow-wrap: normal; word-break: normal; }
+
+/* An agent reply as a brief, scaled down: figures two to a row, steps stacked. */
+.dock-brief { gap: 12px; }
+.dock-brief .prose { font-size: var(--t-sm); }
+.dock-brief .brief-part { padding-top: 10px; }
+.dock-brief .brief-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; padding-top: 10px; }
+.dock-brief .brief-stat { max-width: none; }
+.dock-brief .brief-stat > dd:first-child { font-size: var(--t-lg); }
+.dock-options { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--line-soft); font-size: var(--t-sm); }
+.dock-options-ask { color: var(--attention); }
+.dock-options ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.dock-options li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; color: var(--text-2); }
+.dock-options li b { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line); font-size: var(--t-xs); color: var(--muted); }
+.dock-options li.is-pick b { border-color: var(--text); color: var(--text); }
+.dock-options li span { display: grid; gap: 1px; min-width: 0; }
+.dock-options li em { font-style: normal; font-size: var(--t-xs); color: var(--ok); }
+.dock-options li small, .dock-options-revisit { font-size: var(--t-xs); color: var(--muted); }
+.dock-empty { padding-top: 14px; font-size: var(--t-sm); color: var(--muted); }
+.dock-msg { display: grid; gap: 8px; min-width: 0; padding: 14px 0; overflow-wrap: anywhere; }
+.dock-msg + .dock-msg { border-top: 1px solid var(--line-soft); }
+.dock-msg .said-block { gap: 6px; }
+.dock-msg .said-block blockquote { padding-left: 12px; font-size: 16px; }
+.dock-msg .said-block figcaption, .dock-msg .said-block > .att-chips { padding-left: 14px; }
+.dock-msg .prose { font-size: var(--t-sm); line-height: 1.65; max-width: none; }
+.dock-msg .prose > :first-child { margin-top: 0; }
+.dock-attached { padding-left: 14px; font-size: var(--t-xs); color: var(--faint); }
+
+.dock-consults { display: grid; gap: 6px; padding: 4px 0; }
+.dock-msg .dock-consults { padding: 2px 0 0; }
+.dock-consult { display: grid; gap: 4px; padding: 7px 10px; border-left: 2px solid var(--agent); border-radius: 0 var(--r-sm) var(--r-sm) 0; background: var(--surface); font-size: var(--t-xs); color: var(--muted); }
+.dock-consult-head { display: inline-flex; align-items: center; gap: 6px; color: var(--text-2); }
+.dock-consult.is-live .dock-consult-head svg { color: var(--ok); }
+.dock-consult.is-failed .dock-consult-head { color: var(--risk); }
+.dock-consult-q { color: var(--muted); overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.dock-consult .fold > summary { font-size: var(--t-xs); }
+.dock-consult .fold-body { display: grid; gap: 8px; padding-top: 8px; }
+.dock-consult .fold-body .dock-consult-q { -webkit-line-clamp: unset; }
+.dock-consult .prose { font-size: var(--t-xs); line-height: 1.6; }
+
+.dock-status { display: flex; align-items: center; gap: 8px; padding: 12px 0; font-size: var(--t-sm); color: var(--muted); }
+.dock-status.is-live svg { color: var(--ok); }
+.dock-status.is-failed { flex-wrap: wrap; color: var(--risk); }
+.dock-problem { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.dock-status .button { padding: 5px 10px; font-size: var(--t-xs); }
+
+.dock-form { position: relative; display: grid; gap: 8px; padding: 12px 16px 16px; border-top: 1px solid var(--line-soft); }
+.dock-form .cmp-message { background: var(--bg); }
+.dock-form .cmp-message textarea { min-height: 0; padding: 12px 14px 6px; font-size: 16px; }
+.dock-form .cmp-chip > span { max-width: 240px; }
+/* above the field: the agent answering, a command's result, or an error */
+.dock-line { margin: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--t-xs); color: var(--muted); }
+.dock-line.is-error { color: var(--risk); white-space: normal; }
+.dock-line a { color: var(--accent); }
+.dock-go {
+  display: inline-grid; place-items: center; flex: none; width: 32px; height: 32px; padding: 0; border: 0;
+  border-radius: 50%; background: var(--accent); color: var(--bg); cursor: pointer;
+}
+.dock-go:hover { filter: brightness(1.08); }
+.dock-go:disabled { background: var(--raised); color: var(--faint); cursor: default; filter: none; }
+.dock-go:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* the models popover, over the field like the command menu */
+.dock-models {
+  position: absolute; left: 16px; right: 16px; bottom: calc(100% - 6px); z-index: 1; display: grid; gap: 10px;
+  padding: 12px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface);
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.3);
+}
+.dock-model-row { display: grid; gap: 6px; min-width: 0; }
+.dock-model-row > span { font-size: var(--t-xs); color: var(--muted); }
+.dock-model-row .cmp-seg { display: flex; }
+.dock-model-row .cmp-seg label { flex: 1; padding: 5px 6px; text-align: center; font-size: var(--t-xs); }
+.dock-model-default { display: flex; align-items: center; gap: 8px; font-size: var(--t-xs); color: var(--text-2); cursor: pointer; }
+.dock-model-default input { margin: 0; accent-color: var(--accent); }
+.dock-model-default:has(input:disabled) { cursor: default; color: var(--muted); }
+
+.dock-commands {
+  position: absolute; left: 16px; right: 16px; bottom: calc(100% - 6px); z-index: 1; list-style: none; margin: 0;
+  padding: 4px; display: grid; gap: 1px; border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--surface); box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.3);
+}
+.dock-commands button {
+  display: flex; align-items: baseline; gap: 8px; width: 100%; min-width: 0; padding: 7px 10px; border: 0; border-radius: var(--r-sm);
+  background: none; color: var(--text-2); font-size: var(--t-sm); text-align: left; cursor: pointer;
+}
+.dock-commands li:first-child button, .dock-commands button:hover { background: var(--raised); color: var(--text); }
+.dock-commands code { flex: none; white-space: nowrap; font-size: var(--t-xs); color: var(--accent); }
+.dock-commands .dock-arg { flex: none; white-space: nowrap; font-size: var(--t-xs); color: var(--faint); }
+.dock-commands .dock-hint { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--t-xs); color: var(--muted); }
+
+@media (max-width: 640px) {
+  .dock-fab { right: 16px; bottom: 16px; }
+}

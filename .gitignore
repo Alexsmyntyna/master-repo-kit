@@ -1,0 +1,24 @@
+.DS_Store
+node_modules/
+.next/
+__pycache__/
+*.pyc
+.env*
+!.env.example
+
+# Screens: captures stay local; screens.json and notes.json are kept
+companies/*/screens/runs/
+companies/*/screens/latest.json
+holding/runs.jsonl
+# Runs waiting out a usage limit, and the pid of the waiter that retries them (tools/converse.py retry)
+holding/retries.json
+holding/retries.pid
+holding/uploads/
+
+# Market: competitor screenshots stay local; competitors.json, market.md and reviews are kept
+companies/*/market/shots/
+companies/*/builds/*/runs/*.log
+
+.pytest_cache/
+*.log
+*.tsbuildinfo

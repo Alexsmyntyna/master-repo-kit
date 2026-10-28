@@ -1,0 +1,215 @@
+/* Mockups: the thumbnails in threads and decisions (components/mockups.tsx) and the review page
+   (components/mockup-review.tsx). */
+
+/* ---------- thumbnails, side by side */
+.mockups { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin: 16px 0; }
+.mockup { margin: 0; border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; background: var(--surface); }
+.mockup-frame { display: block; position: relative; height: 380px; overflow: hidden; background: #fff; }
+.mockup-frame iframe { position: absolute; top: 0; left: 0; width: 250%; height: 250%; border: 0; transform: scale(.4); transform-origin: 0 0; pointer-events: none; }
+.mockup figcaption { display: flex; align-items: center; gap: 8px; padding: 10px 12px; font-size: var(--t-sm); }
+.mockup figcaption a { margin-left: auto; color: var(--muted); }
+.mockup figcaption a:hover { color: var(--text); }
+.mockup-letter { font-weight: 600; color: var(--muted); }
+.mockup-frame:hover { box-shadow: inset 0 0 0 1px var(--accent); }
+.mockup-frame:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* ---------- lightbox (components/mockup-lightbox.tsx): a modal <dialog> over the whole window, the sg-dialog's
+   backdrop, a bar of label and tools, and the mockup on a bare stage */
+.mlb {
+  position: fixed; inset: 0; width: 100vw; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 14px 20px 20px;
+  display: none; grid-template-rows: auto minmax(0, 1fr); gap: 14px; border: 0; background: transparent; color: var(--text);
+  font-family: var(--sans);
+}
+.mlb[open] { display: grid; }
+.mlb::backdrop { background: var(--scrim); backdrop-filter: blur(6px); }
+.mlb-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; min-width: 0; }
+.mlb-title { display: flex; align-items: baseline; gap: 10px; min-width: 0; flex: 1 1 260px; margin: 0; font-size: var(--t-md); }
+.mlb-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.mlb-tools { display: flex; align-items: center; gap: 14px; margin-left: auto; }
+.mlb-link { display: inline-flex; align-items: center; gap: 3px; font-size: var(--t-sm); color: var(--accent); }
+.mlb-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.mlb-step { display: inline-flex; align-items: center; gap: 8px; }
+.mlb-count { min-width: 44px; text-align: center; font-size: var(--t-sm); color: var(--muted); }
+.mlb .icon-button { border-color: var(--line); }
+.mlb .icon-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.mlb-stage { display: flex; align-items: center; justify-content: center; min-height: 0; overflow: hidden; }
+.mlb-device { position: relative; flex: none; overflow: hidden; background: #fff; }
+.mlb-phone { border-radius: var(--r-lg); }
+.mlb-desktop { border-radius: var(--r-md); }
+.mlb-device iframe { position: absolute; top: 0; left: 0; display: block; border: 0; background: #fff; transform-origin: 0 0; }
+@media (max-width: 600px) {
+  .mlb { padding: 10px 12px 12px; gap: 10px; }
+  .mlb-tools { gap: 10px; }
+}
+
+/* ---------- the list's thumbnail (app/companies/[slug]/mockups/page.tsx): a live first screen, scaled down */
+.mr-thumb-slot { display: flex; justify-content: center; width: 116px; }
+.mr-thumb { position: relative; display: block; flex: none; overflow: hidden; border: 1px solid var(--line); border-radius: var(--r-md); background: #fff; }
+.mr-thumb-phone { border-radius: 8px; }
+.mr-thumb iframe { position: absolute; top: 0; left: 0; border: 0; transform-origin: 0 0; pointer-events: none; }
+.row-link:hover .mr-thumb { border-color: var(--accent); }
+
+/* ---------- review: the mockup large on the left, the panel on the right */
+.mr-review { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 32px; align-items: start; }
+/* screens and the click mode in a narrow column beside the frame, so the frame gets the full height */
+.mr-stage-col { min-width: 0; display: grid; gap: 12px; align-items: start; position: sticky; top: 64px; }
+/* the modes, screens and view buttons in one row above the frame, so the frame gets the column's whole width */
+.mr-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.mr-screens, .mr-mode { grid-auto-flow: column; }
+.mr-review.no-panel { grid-template-columns: minmax(0, 1fr); }
+.mr-review.no-panel .mr-panel { display: none; }
+.mr-screens, .mr-mode { display: grid; gap: 2px; padding: 2px; border-radius: var(--r-md); background: var(--surface); border: 1px solid var(--line-soft); }
+.mr-screens button, .mr-mode button {
+  display: flex; align-items: center; gap: 6px; padding: 5px 10px; border: 0; border-radius: var(--r-sm);
+  background: none; font-size: var(--t-sm); color: var(--muted); text-align: left;
+}
+.mr-count { margin-left: auto; }
+.mr-screens button:hover, .mr-mode button:hover { color: var(--text); }
+.mr-screens button[aria-selected="true"], .mr-mode button[aria-checked="true"] { background: var(--raised); color: var(--text); }
+.mr-mode button[aria-checked="true"] svg { color: var(--accent); }
+.mr-count { font-size: var(--t-xs); color: var(--owner); }
+/* icon buttons whose label shows on hover (data-tip) */
+.mr-tip { position: relative; }
+.mr-tip::after {
+  content: attr(data-tip); position: absolute; top: calc(100% + 6px); right: 0; z-index: 5; padding: 4px 8px;
+  border-radius: var(--r-sm); background: var(--ink-0); border: 1px solid var(--line); color: var(--text);
+  font: 500 var(--t-xs) var(--sans); white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .12s;
+}
+.mr-tip:hover::after, .mr-tip:focus-visible::after { opacity: 1; transition-delay: .25s; }
+.mr-side {
+  display: grid; place-items: center; width: 32px; height: 32px; margin-left: auto; padding: 0; border: 0;
+  border-radius: var(--r-md); background: none; color: var(--muted);
+}
+.mr-side:hover { background: var(--surface); color: var(--text); }
+
+/* the frame's corner: full screen and new tab, faint until the frame is hovered */
+.mr-corner { position: absolute; top: 8px; right: 14px; z-index: 4; display: flex; gap: 4px; opacity: .45; transition: opacity .15s; }
+.mr-device:hover .mr-corner, .mr-corner:focus-within, .is-full .mr-corner { opacity: 1; }
+.mr-corner > * {
+  display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 1px solid var(--line);
+  border-radius: var(--r-md); background: rgb(10 17 32 / .85); color: var(--text-2); backdrop-filter: blur(6px);
+}
+.mr-corner > *:hover { color: var(--text); border-color: var(--line-strong); }
+
+/* full screen: the stage column over the whole window, the bar across the top, the panel hidden (its state stays) */
+.mr-review.is-full { position: fixed; inset: 0; z-index: 60; display: block; padding: 12px 16px 16px; background: var(--bg-sunk); }
+.mr-review.is-full .mr-panel { display: none; }
+.mr-review.is-full .mr-stage-col { position: static; grid-template-rows: auto minmax(0, 1fr); height: 100%; }
+.mr-review.is-full .mr-stage { align-items: center; min-height: 0; }
+
+.mr-stage { display: flex; justify-content: center; min-width: 0; }
+.mr-device { position: relative; flex: none; background: #fff; }
+.mr-phone { border-radius: 34px; box-shadow: 0 0 0 9px #1b2230, 0 0 0 10px var(--line), 0 24px 60px rgba(0, 0, 0, 0.45); margin: 10px; }
+.mr-desktop { border-radius: var(--r-md); box-shadow: 0 0 0 1px var(--line), 0 18px 50px rgba(0, 0, 0, 0.4); }
+.mr-screen { position: absolute; top: 0; left: 0; transform-origin: 0 0; border-radius: inherit; overflow: hidden; }
+.mr-phone .mr-screen { border-radius: 34px; }
+.mr-screen iframe { display: block; border: 0; background: #fff; }
+.mr-overlay { position: absolute; inset: 0; pointer-events: none; }
+.mr-overlay.is-pinning { pointer-events: auto; cursor: crosshair; }
+
+.mr-pin {
+  position: absolute; z-index: 2; width: 26px; height: 26px; margin: -13px 0 0 -13px; padding: 0;
+  display: grid; place-items: center; border: 2px solid #fff; border-radius: 50% 50% 50% 4px;
+  background: var(--owner); color: #1d1606; font: 600 var(--t-xs) var(--sans); font-variant-numeric: tabular-nums;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45); pointer-events: auto; cursor: pointer;
+}
+.mr-pin.is-active { background: var(--accent); color: var(--bg); transform: scale(1.12); }
+/* the open pin points at its note box (border-radius order: top-left, top-right, bottom-right, bottom-left) */
+.mr-pin.to-se { border-radius: 50% 50% 4px 50%; }
+.mr-pin.to-sw { border-radius: 50% 50% 50% 4px; }
+.mr-pin.to-ne { border-radius: 50% 4px 50% 50%; }
+.mr-pin.to-nw { border-radius: 4px 50% 50% 50%; }
+.mr-pin.is-static { position: static; margin: 0; flex: none; transform: none; }
+
+/* the note box: one field holding the words, any images, and a row with attach and Save; × in its corner */
+.mr-pop {
+  --tx: 0px; --ty: 0px;
+  position: absolute; z-index: 3; width: 300px; margin: 16px 0 0 16px; display: grid;
+  border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--bg); box-shadow: var(--shadow-pop);
+  cursor: default; transform: translate(var(--tx), var(--ty));
+}
+.mr-pop:focus-within { border-color: var(--accent); }
+.mr-pop.is-left { --tx: calc(-100% - 32px); }
+.mr-pop.is-up { --ty: calc(-100% - 32px); }
+.mr-pop textarea {
+  display: block; width: 100%; min-height: 54px; resize: none; padding: 12px 38px 6px 14px; border: 0; background: none;
+  font: 400 16px/1.45 var(--serif); color: var(--text);
+}
+.mr-pop textarea:focus { outline: none; }
+.mr-pop-x {
+  position: absolute; top: 8px; right: 8px; display: grid; place-items: center; width: 24px; height: 24px; padding: 0;
+  border: 0; border-radius: var(--r-sm); background: none; color: var(--faint);
+}
+.mr-pop-x:hover { background: var(--risk-soft); color: var(--risk); }
+.mr-pop-images { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 14px 2px; }
+.mr-pop-images span { position: relative; }
+.mr-pop-images img { display: block; width: 52px; height: 52px; object-fit: cover; border-radius: var(--r-md); border: 1px solid var(--line); }
+.mr-pop-images button {
+  position: absolute; top: -6px; right: -6px; display: grid; place-items: center; width: 18px; height: 18px; padding: 0;
+  border: 1px solid var(--line); border-radius: 50%; background: var(--raised); color: var(--muted);
+}
+.mr-pop-images button:hover { color: var(--risk); }
+.mr-pop-images.is-small { padding: 4px 0 0; }
+.mr-pop-images.is-small img { width: 36px; height: 36px; }
+.mr-pop-tools { display: flex; align-items: center; gap: 8px; padding: 6px 8px 8px 8px; }
+.mr-pop-icon {
+  display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 0; border-radius: var(--r-md);
+  background: none; color: var(--muted);
+}
+.mr-pop-icon:hover:not(:disabled) { background: var(--hover); color: var(--text); }
+.mr-pop-icon:disabled { color: var(--faint); cursor: default; }
+.mr-pop-busy { font-size: var(--t-xs); color: var(--faint); }
+.mr-pop-save {
+  margin-left: auto; padding: 6px 14px; border: 0; border-radius: var(--r-md); background: var(--accent); color: var(--bg);
+  font-weight: 600; font-size: var(--t-sm);
+}
+.mr-pop-save:disabled { background: var(--raised); color: var(--faint); cursor: default; }
+.mr-pop-x:focus-visible, .mr-pop-save:focus-visible, .mr-pop-icon:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* the panel */
+.mr-panel { position: sticky; top: 64px; max-height: calc(100vh - 80px); overflow-y: auto; display: grid; gap: 0; padding-right: 4px; }
+.mr-panel .ph { padding-bottom: 18px; }
+.mr-panel .ph h1 { font-size: var(--t-xl); line-height: 1.25; letter-spacing: -0.02em; }
+.mr-panel .ph-kicker a { color: var(--muted); }
+.mr-panel .ph-kicker a:hover { color: var(--text); }
+.mr-sec { padding: 18px 0; border-top: 1px solid var(--line-soft); display: grid; gap: 10px; }
+.mr-sec h2 { font-size: var(--t-md); font-weight: 600; display: flex; gap: 8px; align-items: baseline; }
+.mr-questions, .mr-notes { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
+.mr-questions li { display: grid; gap: 6px; }
+.mr-ask { font-weight: 500; color: var(--text); line-height: 1.4; }
+.mr-shown { font-size: var(--t-sm); color: var(--muted); line-height: 1.5; }
+.mr-shown button { border: 0; background: none; padding: 0; color: var(--accent); font-size: inherit; }
+.mr-shown button:hover { text-decoration: underline; text-underline-offset: 3px; }
+.mr-words {
+  width: 100%; resize: vertical; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--surface); font: 400 16px/1.45 var(--serif); color: var(--text);
+}
+.mr-words::placeholder { font-family: var(--sans); font-size: var(--t-sm); color: var(--faint); }
+.mr-words:focus { outline: none; border-color: var(--accent); }
+.mr-notes { gap: 10px; }
+.mr-notes li { display: grid; grid-template-columns: 26px minmax(0, 1fr) 20px; gap: 10px; align-items: start; }
+.mr-notes li > div { display: grid; gap: 3px; }
+.mr-notes li.is-active .mr-words { border-color: var(--accent); }
+.mr-where { font-size: var(--t-xs); color: var(--faint); }
+.mr-x { border: 0; background: none; padding: 4px 0; color: var(--faint); }
+.mr-x:hover { color: var(--risk); }
+.mr-hint { font-size: var(--t-sm); color: var(--muted); }
+.mr-overall { margin-top: 4px; }
+.mr-panel .prose { font-size: var(--t-sm); line-height: 1.55; }
+.mr-panel .prose table { font-size: var(--t-xs); width: 100%; }
+.mr-panel .prose th, .mr-panel .prose td { padding: 6px 8px 6px 0; vertical-align: top; }
+.mr-save {
+  position: sticky; bottom: 0; display: flex; align-items: center; gap: 12px; padding: 14px 0 6px;
+  background: linear-gradient(to bottom, transparent, var(--bg) 30%); font-size: var(--t-sm); color: var(--muted);
+}
+.mr-save .is-error { color: var(--risk); }
+.mr-save-btn {
+  padding: 8px 18px; border: 0; border-radius: var(--r-md); background: var(--accent); color: var(--bg);
+  font-weight: 600; font-size: var(--t-sm);
+}
+.mr-save-btn:disabled { background: var(--raised); color: var(--faint); cursor: default; }
+
+@media (max-width: 1180px) {
+  .mr-review { grid-template-columns: minmax(0, 1fr); }
+  .mr-stage-col, .mr-panel { position: static; max-height: none; }
+}

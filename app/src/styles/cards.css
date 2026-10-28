@@ -1,0 +1,135 @@
+/* Project cards (components/card.tsx): the board on the home page, the instrument line above it, and the card leading
+   a project page. Rows, not cards: the board is hairline rows; the project card is one block of key/value lines. */
+
+/* ---------- the instrument line: label then figure, one quiet line between hairlines */
+.dials {
+  display: flex; flex-wrap: wrap; gap: var(--s-1) 0; margin: 0 0 var(--s-5); padding: var(--s-2) 0;
+  border-top: 1px solid var(--line); border-bottom: 1px solid var(--line-soft); font-size: var(--t-sm);
+}
+.dials > div { display: flex; align-items: baseline; gap: var(--s-2); padding: 0 var(--s-4); }
+.dials > div:first-child { padding-left: 0; }
+.dials > div + div { border-left: 1px solid var(--line-soft); }
+.dials dt { color: var(--muted); }
+.dials dd { margin: 0; font-weight: 600; color: var(--text); }
+.dials .is-zero dd { color: var(--faint); font-weight: 400; }
+.dials .tone-attention dd { color: var(--attention); }
+.dials .tone-risk dd { color: var(--risk); }
+@container page (max-width: 640px) {
+  .dials { gap: var(--s-1) var(--s-5); }
+  .dials > div { padding: 0; }
+  .dials > div + div { border-left: 0; }
+}
+
+/* the Recheck all button sits at the end of the instrument line */
+.dials-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-4); margin: 0 0 var(--s-5); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line-soft); }
+.dials-bar .dials { flex: 1; margin: 0; border: 0; }
+
+/* ---------- recheck (components/recheck.tsx): commits since a question was asked, inline after its text */
+.recheck-mark { display: inline-flex; align-items: center; gap: var(--s-2); flex: none; font-size: var(--t-xs); color: var(--attention); white-space: nowrap; }
+.recheck-mark.is-running { color: var(--muted); }
+.recheck-mark.is-resolved { color: var(--ok); }
+.recheck-mark.is-done { color: var(--faint); }
+.recheck-act { display: inline-flex; align-items: center; gap: var(--s-2); }
+.recheck-act .button svg { margin-right: 2px; }
+.board-blocker.has-recheck { display: flex; align-items: center; gap: var(--s-3); }
+.board-clip { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---------- board: text on the left, a fixed rack of instruments on the right so every column lines up */
+.board { display: grid; }
+.board-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s-5); align-items: center;
+  padding: 10px var(--s-3); margin: 0 calc(-1 * var(--s-3)); border-radius: var(--r-md); color: inherit; font-size: var(--t-sm);
+}
+.board-row + .board-row { box-shadow: 0 -1px 0 var(--line-soft); }
+a.board-row:hover { background: var(--surface); box-shadow: none; }
+a.board-row:hover + .board-row { box-shadow: none; }
+a.board-row:hover .board-title { color: var(--accent); }
+.board-head { padding-top: 0; padding-bottom: var(--s-2); font-size: var(--t-xs); color: var(--faint); }
+.board-head + .board-row { box-shadow: 0 -1px 0 var(--line); }
+.board-text { display: grid; gap: 1px; min-width: 0; }
+.board-name { display: flex; align-items: center; gap: var(--s-2); min-width: 0; margin-bottom: 2px; }
+.board-title {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font: 600 var(--t-md)/1.3 var(--display); font-stretch: var(--display-stretch); color: var(--text);
+}
+.board-row.is-unwritten .board-title { color: var(--text-2); font-weight: 500; }
+.board-line { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; padding-left: 16px; line-height: 1.5; }
+.board-goal { color: var(--text); }
+.board-blocker { color: var(--text-2); }
+.board-blocker::before { content: "⟂"; display: inline-block; width: 14px; margin-left: -14px; color: var(--risk); }
+
+.board-inst { display: flex; align-items: center; }
+.bi { display: flex; align-items: center; justify-content: flex-end; min-width: 0; font-size: var(--t-xs); color: var(--text-2); }
+.bi + .bi { margin-left: var(--s-4); }
+.bi-spark { width: 60px; }
+.bi-gates { width: 84px; }
+.bi-owes { width: 140px; }
+.bi-idle { width: 48px; }
+.bi-hyg { width: 58px; justify-content: flex-start; }
+.board-head .bi { color: var(--faint); }
+.board-foot { margin-top: var(--s-4); font-size: var(--t-xs); color: var(--faint); }
+.board-foot a { color: var(--accent); }
+
+.idle.is-fresh { color: var(--text); }
+.idle.is-cooling { color: var(--text-2); }
+.idle.is-cold { color: var(--faint); }
+
+@media (max-width: 1240px) {
+  .bi-owes { width: 116px; }
+  .board-inst .bi-hyg { display: none; }
+}
+@container page (max-width: 820px) {
+  .board-row { grid-template-columns: minmax(0, 1fr); gap: var(--s-2); }
+  .board-head { display: none; }
+  .board-inst { flex-wrap: wrap; gap: var(--s-1) var(--s-4); padding-left: 16px; }
+  .bi { width: auto; }
+  .bi + .bi { margin-left: 0; }
+  .board-inst .bi-hyg { display: flex; }
+  .bi-owes:empty { display: none; }
+}
+
+/* ---------- project card: one face, one size, three fixed columns (label | value | provenance) on every row.
+   A hairline between major rows only; gates sit as rows under Finish with no lines between them. */
+.project-card { --pc-k: 112px; --pc-p: 188px; margin: 0 0 var(--s-5); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line-soft); }
+.pc { display: grid; }
+.pc-group { padding: var(--s-2) 0; }
+.pc-group + .pc-group { border-top: 1px solid var(--line-soft); }
+.pc-row {
+  display: grid; grid-template-columns: var(--pc-k) minmax(0, 1fr) var(--pc-p); column-gap: var(--s-4); align-items: baseline;
+  margin: 0; padding: 3px 0; font: 400 var(--t-sm)/1.55 var(--sans); color: var(--text);
+}
+.pc-row dd { margin: 0; }
+.pc-k, .pc-v, .pc-v .state-word, .pc-v .owes { font-size: var(--t-sm); }
+.pc-k { display: flex; align-items: baseline; gap: var(--s-2); color: var(--faint); }
+.pc-v { display: flex; align-items: baseline; gap: var(--s-3); min-width: 0; overflow-wrap: anywhere; }
+.pc-p { display: flex; justify-content: flex-end; color: var(--faint); font-size: var(--t-xs); white-space: nowrap; }
+.pc-note { color: var(--muted); }
+.pc-risk { color: var(--risk); }
+.pc-spark { flex: none; width: 64px; align-self: center; }
+.pc-gate b { flex: none; width: 1.5em; font-weight: 500; text-align: center; }
+.pc-gate.gate-done b { color: var(--ok); }
+.pc-gate.gate-open b { color: var(--muted); }
+.pc-gate.gate-unknown .pc-v { color: var(--muted); }
+.pc-gate.gate-unknown b { color: var(--faint); }
+.pc-foot { padding-top: var(--s-1); }
+.pc-foot .pc-row { padding: 0; }
+@media (max-width: 760px) {
+  .pc-row { grid-template-columns: minmax(0, 1fr); row-gap: 1px; }
+  .pc-k:empty, .pc-p:empty { display: none; }
+  .pc-p { justify-content: flex-end; }
+}
+
+/* open fronts: one line under the card, lined up with its keys */
+.fronts-line { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: var(--s-4); align-items: baseline; margin: 0 0 var(--s-6); }
+.fronts-line > span:first-child { font-size: var(--t-xs); color: var(--faint); }
+.fronts-line > span:last-child { display: flex; flex-wrap: wrap; gap: var(--s-1) var(--s-5); font-size: var(--t-sm); color: var(--text-2); }
+.fronts-line a { display: inline-flex; align-items: center; gap: var(--s-2); }
+.fronts-line a:hover { color: var(--accent); }
+@media (max-width: 760px) {
+  .card-row, .fronts-line { grid-template-columns: 1fr; gap: 2px; }
+  .card-gates { grid-template-columns: 1fr; }
+}
+
+/* the chat button (dock.css .dock-fab, 48px at 22px from the corner) keeps a lane of its own beside the board */
+.board-page { padding-bottom: 72px; }
+@media (min-width: 901px) { .board-page { padding-right: 48px; } }

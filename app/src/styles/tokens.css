@@ -1,0 +1,103 @@
+/* Master-Repo design tokens. Every color, size, space, radius, shadow and focus ring in the app comes from here.
+
+   One ramp of ink blues (--ink-*) is the ground, the lines and the greys; the semantic names below map onto it.
+   One blue accent for what you can act on, amber only for what's waiting on the owner, green and red for state.
+   Provenance has its own colors and type: the owner's words in a serif (sand), facts read from code in mono (teal), an
+   agent's writing in the plain sans with a lavender marker. Dark is the only scheme. */
+:root {
+  color-scheme: dark;
+
+  /* the ink ramp: deep navy to pale blue-grey */
+  --ink-0: #060b15;
+  --ink-1: #0a1120;
+  --ink-2: #0e1729;
+  --ink-3: #132036;
+  --ink-4: #182842;
+  --ink-5: #1d2f4c;
+  --ink-6: #263a5a;
+  --ink-7: #57688a;
+  --ink-8: #7d8dab;
+  --ink-9: #b2bfd6;
+  --ink-10: #e3e9f4;
+
+  /* ground, from deepest to most raised */
+  --bg-sunk: var(--ink-0);
+  --bg: var(--ink-1);
+  --surface: var(--ink-2);
+  --raised: var(--ink-3);
+  --hover: var(--ink-4);
+  --line-soft: var(--ink-3);
+  --line: var(--ink-5);
+  --line-strong: var(--ink-6);
+
+  /* text */
+  --text: var(--ink-10);
+  --text-2: var(--ink-9);
+  --muted: var(--ink-8);
+  --faint: var(--ink-7);
+
+  /* meaning */
+  --accent: #86b2ff;
+  --accent-rgb: 134, 178, 255;
+  --accent-soft: rgba(var(--accent-rgb), 0.12);
+  --attention: #f0b25e;
+  --attention-rgb: 240, 178, 94;
+  --attention-soft: rgba(var(--attention-rgb), 0.12);
+  --ok: #5fd0a0;
+  --ok-rgb: 95, 208, 160;
+  --ok-soft: rgba(var(--ok-rgb), 0.12);
+  --risk: #ff8f7a;
+  --risk-rgb: 255, 143, 122;
+  --risk-soft: rgba(var(--risk-rgb), 0.12);
+  --idle: #64748f;
+
+  /* provenance: who said it */
+  --owner: #e8c48c;
+  --code: #74d0c4;
+  --agent: #a79cf3;
+  --public: #d89ae0;
+
+  /* one color per project (the square beside its name, base.css .mark-*) */
+
+  /* depth: pop-overs float, scrims dim the page behind a drawer or dialog */
+  --shadow-pop: 0 0 0 1px var(--line), 0 14px 36px rgb(0 0 0 / 0.4);
+  --scrim: rgb(4 7 14 / 0.7);
+  --topbar-bg: rgb(10 17 32 / 0.88);
+
+  /* type: Archivo throughout, semi-condensed for display; Newsreader only for the owner's words; mono only for code */
+  --sans: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --display: var(--font-sans), "Arial Narrow", -apple-system, sans-serif;
+  --display-stretch: 84%;
+  --serif: var(--font-serif), "Iowan Old Style", Georgia, serif;
+  --mono: var(--font-mono), ui-monospace, "SF Mono", Menlo, monospace;
+  --t-2xs: 11.5px;
+  --t-xs: 12.5px;
+  --t-sm: 14px;
+  --t-md: 15.5px;
+  --t-lg: 18px;
+  --t-xl: 23px;
+  --t-2xl: 30px;
+  --t-3xl: 38px;
+
+  /* space: a 4px step */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+  --s-8: 64px;
+
+  /* shape: small radii, square-ish; pills only for choice chips */
+  --r-sm: 3px;
+  --r-md: 4px;
+  --r-lg: 6px;
+  --gutter: 40px;
+  --measure: 68ch;
+  --page-max: 1600px;
+
+  /* focus: one ring everywhere */
+  --focus: var(--accent);
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--focus);
+}

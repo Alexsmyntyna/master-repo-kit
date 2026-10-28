@@ -1,0 +1,27 @@
+{
+  "groups": [
+    {
+      "id": "launch",
+      "title": "Launch",
+      "steps": [
+        {
+          "id": "draft",
+          "text": "Prepare a draft",
+          "who": "agent",
+          "done": true,
+          "done_by": "agent",
+          "evidence": "holding/evidence.md"
+        },
+        {
+          "id": "approve",
+          "text": "Approve the draft",
+          "who": "owner",
+          "done": false,
+          "blocked_by": [
+            "draft"
+          ]
+        }
+      ]
+    }
+  ]
+}

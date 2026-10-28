@@ -1,0 +1,247 @@
+/* The Board (companies/[slug]/build): epics move across five columns; the open epic sits in a panel on the right,
+   with an Overview tab and one tab per agent. Every class here starts with bd-. */
+
+.bd-page { display: grid; gap: 0; min-width: 0; }
+.bd-page .ph { padding-bottom: 22px; }
+.bd-quiet { color: var(--faint); }
+.bd-count { font-size: var(--t-xs); color: var(--faint); }
+.bd-ellipsis { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bd-n { flex: none; font-size: var(--t-xs); color: var(--faint); }
+.bd-page textarea::placeholder { color: var(--faint); }
+.bd-open-form { width: 280px; }
+
+/* ---------- one row under the header: new epic or task on the left, the view on the right */
+.bd-bar { display: flex; align-items: flex-start; gap: 16px; padding-bottom: 22px; }
+.bd-new { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; }
+.bd-new-goal {
+  flex: 1 1 260px; max-width: 540px; height: 36px; padding: 7px 12px; border-radius: var(--r-md); resize: none; overflow: hidden;
+  font-size: var(--t-sm); line-height: 1.5; color: var(--text); background: var(--bg-sunk); border: 1px solid var(--line);
+  transition: height 0.15s ease, border-color 0.12s;
+}
+.bd-new-goal:focus { outline: none; border-color: var(--accent); }
+.bd-new-goal:focus, .bd-new-goal:not(:placeholder-shown) { height: 116px; resize: vertical; overflow: auto; }
+.bd-new .button { height: 36px; }
+.bd-new .form-error, .bd-new .form-done { align-self: center; }
+.bd-settings { width: 36px; height: 36px; position: relative; }
+.bd-settings.is-changed::after {
+  content: ""; position: absolute; top: 6px; right: 6px; width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
+}
+.bd-new .menu-pop { min-width: 230px; }
+
+/* segmented choice: Epic / Task in the form, Epics / Epics + subtasks for the view */
+.bd-seg { display: inline-flex; flex: none; height: 36px; padding: 2px; border-radius: var(--r-md); background: var(--bg-sunk); border: 1px solid var(--line-soft); }
+.bd-seg :is(a, label) {
+  position: relative; display: inline-flex; align-items: center; padding: 0 12px; border-radius: var(--r-sm); cursor: pointer;
+  font-size: var(--t-sm); color: var(--muted);
+}
+.bd-seg :is(a, label):hover { color: var(--text); }
+.bd-seg .on { background: var(--raised); color: var(--text); box-shadow: 0 0 0 1px var(--line); }
+.bd-seg input { position: absolute; opacity: 0; pointer-events: none; }
+.bd-seg label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 1px; }
+.bd-view { margin-left: auto; }
+
+/* ---------- board beside the panel */
+.bd-split { display: grid; gap: 24px; align-items: start; }
+.has-open .bd-split { grid-template-columns: minmax(0, 1fr) minmax(500px, 48%); }
+.bd-board { min-width: 0; container-type: inline-size; }
+.has-open .bd-board { position: sticky; top: 72px; }
+.bd-detail { min-width: 0; } /* in the page flow, so its action row can stick to the bottom of the window */
+@media (max-width: 1180px) {
+  .has-open .bd-split { grid-template-columns: minmax(0, 1fr); }
+  .bd-detail { order: -1; }
+}
+
+/* A narrow board (the chat dock open, a small window) with an epic open: the panel takes the whole width and the
+   board folds to one strip of epic titles above it. */
+.bd-page { container: bd-page / inline-size; }
+@container bd-page (max-width: 960px) {
+  .bd-new-goal { flex-basis: 150px; }
+  .has-open .bd-split { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .has-open .bd-board { container-type: normal; position: static; }
+  .has-open .bd-kanban { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .has-open .bd-col, .has-open .bd-col-list { display: contents; }
+  .has-open .bd-col-head, .has-open .bd-col-none, .has-open .bd-checklist, .has-open .bd-card-foot { display: none; }
+  .has-open .bd-card { flex: 0 1 auto; max-width: 320px; padding: 6px 12px; }
+  .has-open .bd-card-main { display: flex; align-items: center; gap: 10px; }
+  .has-open .bd-card-title { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .has-open .bd-card-top { flex: none; }
+  .has-open .bd-sub-epic { display: none; }
+  .has-open .bd-detail { order: 0; }
+}
+
+/* columns: always the five, an empty one faint */
+.bd-kanban { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.bd-col { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; min-width: 0; align-content: start; }
+.bd-col-head {
+  display: flex; align-items: center; gap: 8px; padding: 0 2px 9px; border-bottom: 1px solid var(--line-soft);
+  font-size: var(--t-sm); font-weight: 500; color: var(--text); letter-spacing: 0; white-space: nowrap; overflow: hidden;
+}
+.bd-col-head .stage-icon, .bd-col-head .mono { flex: none; }
+.bd-col-head .mono { color: var(--faint); font-weight: 400; }
+.bd-col.is-empty .bd-col-head { color: var(--faint); font-weight: 400; }
+.bd-col.is-empty .stage-icon { opacity: 0.5; }
+.bd-col-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; align-content: start; }
+.bd-col-none { padding: 2px; font-size: var(--t-sm); color: var(--faint); }
+@container (max-width: 760px) {
+  .bd-kanban { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .bd-kanban:not(.is-blank) .bd-col.is-empty { display: none; }
+}
+
+/* cards: an epic, or a subtask in the Epics + subtasks view. The card opens the panel. */
+.bd-card {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 12px 14px; min-width: 0; border-radius: var(--r-md);
+  background: var(--surface); border: 1px solid var(--line-soft); transition: border-color 0.12s;
+}
+.bd-card:hover { border-color: var(--line); }
+.bd-card.is-open { border-color: var(--accent); }
+.bd-card.is-live { border-color: color-mix(in srgb, var(--ok) 40%, var(--line-soft)); }
+.bd-card-main { display: grid; gap: 4px; color: inherit; min-width: 0; }
+.bd-card-top { display: flex; align-items: center; gap: 10px; }
+.bd-kind { font-size: var(--t-xs); color: var(--muted); }
+.bd-card-title {
+  font-size: var(--t-sm); font-weight: 500; line-height: 1.4; color: var(--text); overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.bd-card-main:hover .bd-card-title, .bd-card-main:hover .bd-sub-title { color: var(--accent); }
+.bd-checklist { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 1px; }
+.bd-checklist a {
+  display: flex; align-items: center; gap: 8px; padding: 3px 6px; margin: 0 -6px; border-radius: var(--r-sm);
+  font-size: var(--t-xs); color: var(--text-2);
+}
+.bd-checklist a:hover { background: var(--raised); color: var(--text); }
+.bd-checklist .is-done a { color: var(--muted); }
+.bd-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; min-height: 18px; }
+.bd-card-foot .meta { font-size: var(--t-xs); }
+.bd-sub { gap: 8px; padding: 10px 12px; }
+.bd-sub-title { display: grid; grid-template-columns: 14px auto minmax(0, 1fr); align-items: start; gap: 8px; font-size: var(--t-sm); font-weight: 500; line-height: 1.4; color: var(--text); }
+.bd-sub-title .stage-icon { margin-top: 3px; }
+.bd-sub-title .bd-n { padding-top: 1px; }
+.bd-sub .bd-card-foot .meta { margin-left: auto; }
+.bd-sub-epic { font-size: var(--t-xs); color: var(--faint); padding-left: 22px; }
+
+/* subtasks done, as segments */
+.bd-prog { display: inline-flex; align-items: center; gap: 8px; font-size: var(--t-xs); color: var(--muted); }
+.bd-prog-bar { display: flex; gap: 2px; width: 72px; }
+.bd-prog-bar i { flex: 1; height: 4px; border-radius: 2px; background: var(--line); }
+.bd-prog-bar .p-ready { background: color-mix(in srgb, var(--text-2) 35%, var(--line)); }
+.bd-prog-bar .p-working { background: var(--ok); }
+.bd-prog-bar .p-review { background: var(--attention); }
+.bd-prog-bar .p-done { background: var(--text-2); }
+.bd-prog-bar .is-live { animation: stage-pulse 1.4s ease-in-out infinite; }
+
+/* ---------- the panel on the right */
+.bd-panel { display: grid; min-width: 0; border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--line); }
+.bd-panel.is-live { border-color: color-mix(in srgb, var(--ok) 35%, var(--line)); }
+.bd-panel-head { display: grid; gap: 14px; padding: 16px 22px 20px; }
+.bd-panel-kicker { display: flex; align-items: center; gap: 10px; min-height: 28px; }
+.bd-panel-kicker .meta { font-size: var(--t-xs); }
+.bd-panel-kicker .bd-kind { font-weight: 500; color: var(--text-2); }
+.bd-panel-kicker .meta a { color: var(--accent); }
+.bd-close {
+  display: grid; place-items: center; width: 28px; height: 28px; margin-left: auto; border-radius: var(--r-sm);
+  color: var(--muted);
+}
+.bd-close:hover { color: var(--text); background: var(--raised); }
+.bd-panel-head h2 { margin-top: -6px; font-size: var(--t-xl); line-height: 1.25; letter-spacing: -0.02em; overflow-wrap: anywhere; }
+.bd-words { display: grid; gap: 14px; padding-bottom: 4px; }
+.bd-words .said-block + .said-block { margin-top: 0; }
+.bd-panel .said-block blockquote { font-size: var(--t-md); }
+
+/* where the epic is: five bars */
+.bd-track { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+.bd-track li { display: grid; gap: 6px; font-size: var(--t-xs); color: var(--faint); }
+.bd-track i { height: 3px; border-radius: 2px; background: var(--line); }
+.bd-track .past { color: var(--muted); }
+.bd-track .past i { background: color-mix(in srgb, var(--text-2) 45%, var(--line)); }
+.bd-track .now { color: var(--text); font-weight: 500; }
+.bd-track .now i { background: var(--st); }
+
+/* tabs (ds Tabs): Overview, then one per agent */
+.bd-panel .tabs { margin: 0; padding: 0 22px; border-top: 1px solid var(--line-soft); }
+.bd-panel .tabs .mono { font-weight: 500; }
+.bd-panel-body { padding: 20px 22px 24px; min-width: 0; }
+.bd-pane { display: grid; gap: 24px; min-width: 0; }
+.bd-pane-head { display: flex; align-items: baseline; gap: 12px; }
+.bd-pane-head h3 { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 8px; font-size: var(--t-md); font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
+.bd-pane-state { flex: none; display: inline-flex; align-items: center; gap: 8px; color: var(--ok); }
+.bd-pane-head + .bd-facts { margin-top: -10px; }
+.bd-facts { display: grid; gap: 12px; }
+.bd-warn { font-size: var(--t-sm); color: var(--tone, var(--muted)); }
+.bd-warn .state-word { font-size: var(--t-sm); }
+.bd-warn.tone-risk { --tone: var(--risk); }
+
+/* the action row at the end of the panel: stays in view while the panel scrolls */
+.bd-panel-foot {
+  position: sticky; bottom: 0; z-index: 2; padding: 12px 22px 14px; border-top: 1px solid var(--line-soft);
+  background: var(--surface); border-radius: 0 0 var(--r-lg) var(--r-lg);
+}
+.bd-foot-form { display: grid; gap: 10px; }
+.bd-actionrow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.bd-actionrow .inline-form { gap: 8px; }
+.bd-actionrow .form-error, .bd-actionrow .form-done { margin-left: 4px; }
+.bd-open-in { margin-left: auto; }
+.bd-open-in .menu-pop { min-width: 250px; }
+.bd-panel-foot .button { padding: 7px 11px; font-size: var(--t-xs); }
+.bd-compose textarea {
+  display: block; width: 100%; min-height: 84px; padding: 10px 12px; border-radius: var(--r-md); resize: vertical;
+  font-size: var(--t-sm); line-height: 1.55; color: var(--text); background: var(--bg-sunk); border: 1px solid var(--line);
+}
+.bd-compose textarea:focus { outline: none; border-color: var(--accent); }
+.bd-compose { position: relative; }
+
+/* titled blocks */
+.bd-block { display: grid; gap: 10px; min-width: 0; }
+.bd-block > header { display: flex; align-items: center; gap: 10px; }
+.bd-block > header h3 { font-size: var(--t-sm); font-weight: 600; letter-spacing: -0.005em; }
+.bd-messages { display: grid; gap: 12px; }
+.bd-messages .said-block + .said-block { margin-top: 4px; }
+.bd-messages .fold > summary { color: var(--text-2); }
+.bd-messages .fold > summary:hover { color: var(--text); }
+.bd-messages .fold > summary .src { margin-left: 4px; }
+
+/* a mockup hub's answer sheet: question, the choice, the owner's note */
+.bd-hub { list-style: none; margin: 0; padding: 0; display: grid; }
+.bd-hub li { display: grid; gap: 4px; padding: 12px 0; border-top: 1px solid var(--line-soft); }
+.bd-hub li:first-child { border-top: 0; padding-top: 0; }
+.bd-hub-q { font-size: var(--t-xs); color: var(--muted); }
+.bd-hub-a { font-size: var(--t-sm); font-weight: 500; color: var(--text); }
+.bd-hub-note {
+  margin: 4px 0 0; padding-left: 12px; border-left: 2px solid var(--owner);
+  font: 400 var(--t-md)/1.55 var(--serif); color: var(--text-2); white-space: pre-line; overflow-wrap: anywhere;
+}
+.bd-hub-path { margin-top: 10px; font-size: var(--t-xs); color: var(--faint); overflow-wrap: anywhere; }
+
+/* agent prose and briefs inside the panel: one column, no cards in cards */
+.bd-panel .brief { gap: 10px; }
+.bd-panel .prose { font-size: var(--t-sm); line-height: 1.65; max-width: none; color: var(--text-2); }
+.bd-panel .prose h1, .bd-panel .prose h2 { font-size: var(--t-md); margin: 16px 0 6px; color: var(--text); }
+.bd-panel .prose h3, .bd-panel .prose h4 { font-size: var(--t-sm); margin: 12px 0 4px; color: var(--text); }
+.bd-panel .prose > :first-child { margin-top: 0; }
+.bd-panel .prose ul, .bd-panel .prose ol { padding-left: 1.2em; }
+
+/* folded detail */
+.bd-folds { display: grid; gap: 14px; padding-top: 18px; border-top: 1px solid var(--line-soft); }
+.bd-folds .fold > summary { color: var(--text-2); font-weight: 500; }
+.bd-folds .fold > summary:hover { color: var(--text); }
+.bd-folds .fold-body, .bd-messages .fold-body { padding-top: 12px; }
+.bd-pre { margin: 0; padding: 10px 12px; border-radius: var(--r-md); background: var(--bg-sunk); font: var(--t-xs)/1.55 var(--mono); color: var(--text-2); overflow-x: auto; }
+.bd-log { margin: 10px 0 0; padding-left: 1.2em; font-size: var(--t-xs); color: var(--text-2); display: grid; gap: 2px; }
+
+/* what the agent did */
+.bd-feed {
+  list-style: none; margin: 0; padding: 6px 12px; display: grid; max-height: 340px; overflow-y: auto; scrollbar-width: thin;
+  border-radius: var(--r-md); background: var(--bg-sunk);
+}
+.bd-feed li { display: flex; gap: 10px; padding: 4px 0; font-size: var(--t-xs); line-height: 1.5; color: var(--text-2); min-width: 0; }
+.bd-feed li + li { border-top: 1px solid var(--line-soft); }
+.bd-feed b { flex: none; font-weight: 500; color: var(--text); }
+.bd-feed .code-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+.bd-feed .ev-text span { white-space: pre-line; overflow-wrap: anywhere; }
+.bd-feed .ev-error { color: var(--risk); }
+.bd-feed .bd-feed-you { color: var(--owner); }
+.bd-feed .ev-prompt span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* grids in the panel never grow past it: long paths and diffs scroll or wrap inside */
+.bd-panel, .bd-panel-head, .bd-pane, .bd-block, .bd-folds, .bd-facts, .bd-foot-form, .bd-words { grid-template-columns: minmax(0, 1fr); }
+.bd-panel .fold-body, .bd-panel .said-block, .bd-panel .brief > * { min-width: 0; }
+.bd-panel .prose { overflow-wrap: anywhere; }
