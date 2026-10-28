@@ -182,7 +182,7 @@ export function ProjectCard({ card, snapshot }: { card: Card; snapshot?: WeekSna
   const fp = footprintText(card.footprint);
   const h = card.hygiene;
   const o = card.owes;
-  const owesAny = !!o && o.decisions + o.builds_review + o.threads_awaiting + o.builds_approved_unrun > 0;
+  const owesAny = !!o && o.decisions + o.builds_review + o.threads_awaiting + o.contradictions + o.builds_approved_unrun > 0;
   const groups: [string, React.ReactNode][] = [];
   if (!card.written)
     groups.push(["card", <CardRow key="c" k="Card">{none(`no card yet${card.needs && card.needs !== "card not written" ? ` · ${card.needs}` : ""}`)}</CardRow>]);

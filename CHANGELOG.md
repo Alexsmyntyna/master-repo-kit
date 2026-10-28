@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.0 — 2026-10-28
+
+- The CEO can consult several projects at once: a `FANOUT:` line starts one COO per project in parallel, each in that project's repo, and the thread shows them as live lanes. Then the CEO answers once.
+- Roles come from `agents/*.md`. New: Marketing and Research. Add your own; front matter sets model, turns, tools and the folders it may write (`writes`).
+- Contradiction check: `master contradict check` pairs things you said on different days about the same topic; `--run` has an agent judge them, and open ones show on the project card to settle.
+- `master init` asks for the hub's name and your code folder, finds your repos, makes a project for each one you pick, and can add the pointer block to their CLAUDE.md and AGENTS.md.
+- Coding agents' project context includes the latest decisions.
+- Next.js 16.4.3 and patched sharp and source-map-js: `npm audit` reports 0 vulnerabilities.
+
 ## 0.1.1 — 2026-10-28
 
 - README: both install paths (with and without `gh`), starting the app with `tools/master`, and an honest "not yet" list.

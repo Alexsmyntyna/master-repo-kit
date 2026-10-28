@@ -1,5 +1,5 @@
 {
-  "version": "0.1.1",
+  "version": "0.2.0",
   "include": [
     "app/",
     "tools/",
@@ -366,6 +366,16 @@
       "file": "kit.json",
       "pattern": "user@contact.test",
       "reason": "Documents a file-scoped public fixture or legacy schema exception."
+    },
+    {
+      "file": "tools/contradict.py",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "tools/test_contradict.py",
+      "pattern": "alex",
+      "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
     }
   ],
   "copy": {
@@ -394,6 +404,10 @@
     {
       "term": "manager",
       "reason": "Ordinary word; part of a private slug but used generically in tools and copy."
+    },
+    {
+      "term": "workshop",
+      "reason": "Ordinary word; part of a private slug but used generically in tests."
     }
   ]
 }

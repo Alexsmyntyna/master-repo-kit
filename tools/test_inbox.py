@@ -179,3 +179,18 @@ class Inbox(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_context_recent_decisions(tmp_path, monkeypatch):
+    monkeypatch.setattr(inbox, 'ROOT', tmp_path)
+    base = tmp_path / 'companies/demo'
+    base.mkdir(parents=True)
+    (base / 'company.json').write_text('{"name": "Demo"}')
+    decisions = [{'date': f'2026-10-{i:02d}', 'decision': f'Choice {i}\nsecond line'} for i in range(1, 11)]
+    (base / 'decisions.json').write_text(json.dumps(decisions))
+    output = inbox.cmd_context('demo')
+    assert '2026-10-10: Choice 10 second line' in output
+    assert output.index('Choice 10') < output.index('Choice 9')
+    assert 'Choice 2 second line' not in output
+    assert 'Choice 3 second line' in output
+    assert output.index('## Recent decisions') < output.index('## Open fronts')

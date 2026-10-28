@@ -53,3 +53,58 @@ def test_existing_other_origin_is_preserved(tmp_path):
     (tmp_path / 'kit.json').write_text('{}')
     init.prepare_remotes(tmp_path)
     assert init.git(tmp_path, 'remote').strip() == 'origin'
+
+
+def test_noninteractive_repos_and_pointers(tmp_path, monkeypatch, capsys):
+    import subprocess
+    import codebases
+    home = tmp_path / 'home'
+    home.mkdir()
+    monkeypatch.setenv('HOME', str(home))
+    code_dir = home / 'code'
+    code_dir.mkdir()
+    for name, owner in [('Own App', 'dana'), ('clone', 'someone-else')]:
+        repo = code_dir / name
+        subprocess.run(['git', 'init', str(repo)], check=True, capture_output=True)
+        subprocess.run(['git', '-C', str(repo), 'remote', 'add', 'origin',
+                        f'https://github.com/{owner}/{name.replace(" ", "-")}.git'], check=True)
+    root = tmp_path / 'hub'
+    args = ['init.py', str(root), '--hub', 'Workshop', '--name', 'Dana',
+            '--email', 'dana@example.test', '--handle', 'dana', '--code-dir', str(code_dir),
+            '--repos', 'own', '--pointers', 'yes']
+    monkeypatch.setattr(sys, 'argv', args)
+    init.main()
+    owner = json.loads((root / 'local/owner.json').read_text())
+    assert owner['hub'] == 'Workshop'
+    assert owner['code_dir'] == str(code_dir)
+    assert codebases.code_folder(root) == code_dir
+    project = root / 'companies/own-app'
+    company = json.loads((project / 'company.json').read_text())
+    assert company['id'] == 'own-app' and company['name'] == 'Own App'
+    assert company['repos'] == [{'path': str(code_dir / 'Own App')}]
+    assert not (root / 'companies/clone').exists()
+    for name in ['AGENTS.md', 'CLAUDE.md', 'MASTER-REPO.md']:
+        text = (code_dir / 'Own App' / name).read_text()
+        assert 'Workshop' in text and str(root) in text
+    assert not (code_dir / 'clone/MASTER-REPO.md').exists()
+    assert not list(code_dir.glob('*/.git/refs/heads/*'))
+    output = capsys.readouterr().out
+    assert 'clone (clone)' in output and 'Own App (own)' in output
+    assert 'Pointer changed:' in output
+    (project / 'company.json').write_text('{"keep": true}')
+    init.main()
+    assert json.loads((project / 'company.json').read_text()) == {'keep': True}
+
+
+def test_selection_and_default_no_pointers(tmp_path, monkeypatch):
+    import subprocess
+    code_dir = tmp_path / 'code'
+    code_dir.mkdir()
+    subprocess.run(['git', 'init', str(code_dir / 'demo')], check=True, capture_output=True)
+    for selection, expected in [('none', False), ('all', True), ('demo', True)]:
+        root = tmp_path / selection
+        monkeypatch.setattr(sys, 'argv', ['init.py', str(root), '--name', 'Dana', '--handle', 'dana',
+                                         '--code-dir', str(code_dir), '--repos', selection])
+        init.main()
+        assert (root / 'companies/demo/company.json').exists() == expected
+        assert not (code_dir / 'demo/MASTER-REPO.md').exists()

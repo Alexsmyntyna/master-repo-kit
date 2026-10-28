@@ -22,6 +22,7 @@
 #   master hygiene scan <slug>|--all     stray files, agent-file size and pointer in each repo (read-only)
 #   master refresh [--commit] [--probe]  the daily no-agent chain: snapshot, pulse, footprint, hygiene, recheck flags, cards, stale
 #   master recheck scan|list|run ...     open questions the code moved past; run has a Sonnet agent recheck them
+#   master contradict check|list|resolve|dismiss ...   where the owner now says what conflicts with what they said before
 #
 # Content (wiki pages, threads, JSON) is read live; a rebuild is only needed when app code changes.
 set -euo pipefail
@@ -136,6 +137,7 @@ case "${1:-}" in
   hygiene) shift; python3 "$REPO/tools/hygiene.py" "$@" ;;
   refresh) shift; python3 "$REPO/tools/refresh.py" "$@" ;;
   recheck) shift; python3 "$REPO/tools/recheck.py" "$@" ;;
+  contradict) shift; python3 "$REPO/tools/contradict.py" "$@" ;;
   schedule) schedule "${2:-status}" ;;
   -h|--help|help) sed -n 2,26p "$0" | sed 's/^# \{0,1\}//' ;;
   *) python3 "$REPO/tools/converse.py" "$@" ;;

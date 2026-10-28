@@ -381,6 +381,15 @@ def cmd_context(slug: str) -> str:
     except ValueError:
         name = slug
     parts = [f"# {name} (`companies/{slug}/` in {ROOT})", "", "## Card", *card_lines(base)]
+    decisions_file = base / "decisions.json"
+    decisions = json.loads(decisions_file.read_text()) if decisions_file.is_file() else []
+    decisions = sorted(decisions, key=lambda d: d.get("date") or "", reverse=True)[:8]
+    def decision_line(d):
+        text = d.get("decision") or d.get("title") or "Untitled decision"
+        if isinstance(text, dict):
+            text = text.get("text", "")
+        return f"- {d.get('date') or 'undated'}: {' '.join(str(text).split())[:220]}"
+    parts += ["", "## Recent decisions", *([decision_line(d) for d in decisions] or ["None recorded."])]
     fronts = front_lines(base)
     parts += ["", "## Open fronts", *(fronts[:6] or ["None open."])]
     parts += ["", "## Recent", *(recent_items(base) or ["Nothing dated yet."])]
@@ -388,7 +397,7 @@ def cmd_context(slug: str) -> str:
     parts += ["", "## Standards (read the ones that touch your task)", *(std or ["None written yet."])]
     tool = f"python3 {paths.CODE / 'tools' / 'inbox.py'}"
     parts += ["", f"Write back: `{tool} note|mockup|rule|done {slug} ...` (`--help` for each)."]
-    return "\n".join(parts[:59])
+    return "\n".join(parts[:69])
 
 
 # --- cli -----------------------------------------------------------------------------------------------

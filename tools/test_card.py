@@ -58,13 +58,21 @@ class Card(unittest.TestCase):
             m.ROOT = root
         self.tmp.cleanup()
 
+    def test_open_contradictions_count_as_owed(self):
+        write(self.co / "contradictions.json", json.dumps([{"id": "a", "status": "open"}, {"id": "b", "status": "none"},
+                                                           {"id": "c", "status": "open"}, {"id": "d", "status": "resolved"}]))
+        c = card.refresh("shop")
+        self.assertEqual(c["owes"]["contradictions"], 2)
+        self.assertIn("2 contradictions to settle", card.owes_line(c["owes"]))
+        self.assertGreaterEqual(card.owes_total(c), 2)
+
     def test_new_card_has_empty_human_keys_and_a_needs_marker(self):
         footprint.scan("shop")
         c = card.refresh("shop")
         self.assertEqual((c["goal"], c["gates"], c["blocker"], c["next"]), (None, [], None, None))
         self.assertEqual(c["needs"], "goal, gates, blocker, next")
         self.assertEqual(c["owes"], {"decisions": 1, "builds_review": 1, "builds_approved_unrun": 1,
-                                     "threads_awaiting": 1})
+                                     "threads_awaiting": 1, "contradictions": 0})
         self.assertEqual(c["moved"]["commits_30d"], 4)
         self.assertEqual(c["moved"]["idle_days"], 30)  # recomputed from last_commit, not copied
         self.assertEqual(c["tier"], "focus")

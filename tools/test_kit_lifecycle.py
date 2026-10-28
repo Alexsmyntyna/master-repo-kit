@@ -25,7 +25,7 @@ def lifecycle(tmp_path):
     code = tmp_path / 'engine'; code.mkdir()
     git(code, 'init', '-b', 'main')
     (code / 'tools').mkdir()
-    for name in ('init.py', 'update.py', 'paths.py', 'migrate.py', 'skills.py'):
+    for name in ('init.py', 'update.py', 'paths.py', 'migrate.py', 'skills.py', 'codebases.py', 'pointer.py'):
         shutil.copy2(Path(__file__).parent / name, code / 'tools' / name)
     (code / 'tools/demo.py').write_text('first\n')
     (code / 'CHANGELOG.md').write_text('# Changes\n\n## 0.1.0\nFirst\n')
@@ -42,7 +42,7 @@ def lifecycle(tmp_path):
     hub = tmp_path / 'hq'
     subprocess.run(['git', 'clone', str(kit_remote), str(hub)], check=True, capture_output=True)
     identity(hub)
-    subprocess.run([sys.executable, str(hub / 'tools/init.py'), '--name', 'Test', '--email', 'test@example.com', '--handle', 'test', '--commit'], check=True, capture_output=True)
+    subprocess.run([sys.executable, str(hub / 'tools/init.py'), '--name', 'Test', '--email', 'test@example.com', '--handle', 'test', '--code-dir', str(code), '--repos', 'none', '--commit'], check=True, capture_output=True)
     assert git(hub, 'remote') == 'kit'
     private = tmp_path / 'private.git'
     subprocess.run(['git', 'init', '--bare', '-b', 'main', str(private)], check=True, capture_output=True)

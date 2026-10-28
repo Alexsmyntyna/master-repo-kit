@@ -21,3 +21,5 @@ Write back:
 - A research page at `companies/{project}/wiki/research/<topic>.md` (`kind: research`) and `written_by: agent`: findings as tables and short lists, each figure with its source and date, estimates marked Agent: (`skills/writing.md`). Sources at the end.
 - When numbers matter, a model the owner can play with: build a view in the app (see `skills/visualize.md`) with every input visible and labelled as an example or a sourced figure.
 - Link the page from the related front if there is one. Update `company.json` → `market` fields if the research changes them.
+
+The Research role (`agents/research.md`) can run this inside a thread; address it with `--to research`.

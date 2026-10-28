@@ -2,11 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { getCompanies, getCompany } from "@/lib/repository";
-import { getThread } from "@/lib/threads";
+import { collapseLaneMessages, getThread } from "@/lib/threads";
 import { dateLabel } from "@/lib/model";
 import { Consults, LatestMessage, MessageCard, ThreadStatus } from "@/components/thread-view";
 import { OpenOnHash } from "@/components/open-on-hash";
 import { Reply } from "@/components/composer";
+import { Lanes } from "@/components/thread-lanes";
 import { RunStatus } from "@/components/run-status";
 import { ensureRetryWaiter } from "@/lib/spawn";
 import { getPortfolio } from "@/lib/pulse";
@@ -36,7 +37,10 @@ export default async function ThreadPage({ params }: Params) {
   const names = Object.fromEntries(companies.map((c) => [c.id, c.name]));
   if (!thread) notFound();
   const next = thread.messages.at(-1)?.to;
-  const last = thread.messages.at(-1);
+  const lanes = thread.lanes || [];
+  const visible = collapseLaneMessages(thread.messages, lanes);
+  const latest = visible.at(-1);
+  const last = latest?.m;
   // A stale thread (unanswered 14 days, tools/refresh.py) can still be answered like one waiting on the owner.
   const awaiting = ["awaiting-alex", "awaiting-owner"].includes(thread.status) || thread.status === "stale";
   const card = awaiting && last ? parseCard(last.body) : undefined;
@@ -98,11 +102,13 @@ export default async function ThreadPage({ params }: Params) {
         <Consults consults={thread.consults.filter((c) => c.feeds === thread.messages.length + 1)} names={names} />
       )}
 
+      <Lanes lanes={lanes} messages={thread.messages} names={names} />
+
       {last && (
         <LatestMessage
           m={last}
-          n={thread.messages.length}
-          consults={thread.consults.filter((c) => c.feeds === thread.messages.length)}
+          n={latest!.n}
+          consults={thread.consults.filter((c) => c.feeds === latest!.n)}
           names={names}
         >
           {awaiting && (last.from === "ceo" || last.from === "coo") && (card || last.kind === "decision") && (
@@ -142,17 +148,17 @@ export default async function ThreadPage({ params }: Params) {
         />
       )}
 
-      {thread.messages.length > 1 && (
+      {visible.length > 1 && (
         <section className="history">
-          <h2 className="history-head">Earlier · {thread.messages.length - 1}</h2>
+          <h2 className="history-head">Earlier · {visible.length - 1}</h2>
           <OpenOnHash />
           <ol className="msg-list">
-            {thread.messages.slice(0, -1).map((m, i) => (
+            {visible.slice(0, -1).map(({ m, n }) => (
               <MessageCard
                 key={m.path}
                 m={m}
-                n={i + 1}
-                consults={thread.consults.filter((c) => c.feeds === i + 1)}
+                n={n}
+                consults={thread.consults.filter((c) => c.feeds === n)}
                 names={names}
               />
             ))}

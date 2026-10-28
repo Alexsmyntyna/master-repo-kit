@@ -36,7 +36,9 @@ cd hq
 tools/master init --private-repo <you>/hq
 ```
 
-Init asks your name, email and GitHub handle, writes your starter files, renames the kit remote to `kit` (updates come from there), and uses the GitHub CLI (`gh`) to create `<you>/hq` as a private repo, commit and push.
+Init asks for a hub name (`--hub`), your name (`--name`), emails (`--email`) and GitHub handle (`--handle`), then your code folder (`--code-dir`). It lists local repos and asks which to track (`--repos all|own|none|a,b,c`, default `own`). Each chosen repo gets a project folder. It then offers agent pointers (`--pointers yes|no`, default no). Pointers change files in those repos for you to review; they never commit or push there.
+
+Init writes your starter files, renames the kit remote to `kit` (updates come from there), and uses the GitHub CLI (`gh`) to create `<you>/hq` as a private repo, commit and push.
 
 Without `gh`, commit locally and add your own private remote:
 
@@ -89,11 +91,8 @@ tools/master update
 
 ## What it does not do yet
 
-- Init doesn't touch your other repos. Once your projects have folders, `python3 tools/pointer.py install` adds a `MASTER-REPO.md` and a short block to each repo's CLAUDE.md and AGENTS.md so their agents read the hub first.
-- The CEO can't yet run agents in several repos at once; it works through them one thread at a time.
-- No contradiction check between things you've said on different days.
-- Roles are CEO and COO. Write your own in `agents/` in your hub.
 - Tested with Claude Code. Other agents read `AGENTS.md`, but haven't been tested.
+- Fan-out lanes run the COO role only; ask Marketing or Research on a project's own thread.
 
 ## Licence
 

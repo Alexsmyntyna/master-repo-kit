@@ -854,5 +854,121 @@ class Retries(Threads):
         self.assertEqual((self.root / "holding" / "retries.pid").read_text(), "")
 
 
+class Fanout(Threads):
+    def test_custom_roles_and_per_file_data_override(self):
+        (self.root / "agents" / "x.md").write_text('---\nmodel: haiku\nmax_turns: 7\ntools:\n  - Read\n  - Glob\n---\nCustom investigator.')
+        self.assertIn("x", converse.agent_roles())
+        self.assertEqual(converse.role_spec("x"), {"model": "haiku", "max_turns": 7, "tools": ["Read", "Glob"], "writes": []})
+        (self.root / "agents" / "y.md").write_text('---\nwrites: [wiki/research, ../escape]\n---\nWriter.')
+        self.assertEqual(converse.role_spec("y")["writes"], ["wiki/research"])
+        self.assertEqual(converse.default_model("x"), "haiku")
+        self.assertEqual(converse.role_files()["ceo"], self.root / "agents" / "ceo.md")
+        self.assertIn("research", converse.agent_roles())  # shipped role survives partial overrides
+        self.assertEqual(converse.role_spec("research")["tools"], ["Read", "Grep", "Glob", "WebSearch", "WebFetch"])
+        t = converse.new_thread("demo", "Custom", "Find it", to="x")
+        self.assertEqual(converse.next_role(t), "x")
+        self.assertIn("Custom investigator", converse.take_turn(t, dry_run=True))
+        with patch.object(converse.subprocess, "run", return_value=converse.subprocess.CompletedProcess([], 0,
+                          stdout=json.dumps({"result": "Found it."}), stderr="")) as run:
+            converse.take_turn(t, "x")
+            self.assertIn("7", run.call_args.args[0])
+        converse.main(["post", str(t), "--as", "x", "--to", "research", "--body", "Continue"])
+        self.assertEqual(converse.next_role(t), "research")
+
+    def test_concurrent_lanes_stream_state_posts_and_summary(self):
+        import io
+        import threading
+        other = self.root / "companies" / "other"
+        other.mkdir()
+        repo = self.root / "local-code"
+        repo.mkdir()
+        (other / "company.json").write_text(json.dumps({"repos": [{"path": str(repo)}]}))
+        t = converse.new_thread("holding", "Compare", "Compare projects")
+        converse.add_message(t, "ceo", "owner", "reply", "Investigate both")
+        barrier = threading.Barrier(2)
+        seen = []
+        transitions = []
+        real_write = converse.write_lane
+        def write(path, state):
+            transitions.append((state["slug"], state["status"]))
+            real_write(path, state)
+        class Fake:
+            returncode = 0
+            def __init__(self, cmd, **kw):
+                seen.append(kw["cwd"])
+                barrier.wait(timeout=3)  # sequential subprocess creation fails here
+                self.stdout = io.StringIO(json.dumps({"type": "assistant", "message": {"content": [
+                    {"type": "tool_use", "name": "Read", "input": {"file_path": "sync/merge.ts"}}]}}) + "\n" +
+                    json.dumps({"type": "result", "result": "Viable. Read sync/merge.ts."}) + "\n")
+            def wait(self): return 0
+            def kill(self): pass
+        summaries = []
+        def summary(thread, role, **kw):
+            states = [json.loads(p.read_text()) for p in (t / "lanes").glob("*.json")]
+            self.assertTrue(all(s["status"] == "done" for s in states))
+            summaries.append(role)
+        with patch.object(converse.subprocess, "Popen", Fake), patch.object(converse, "write_lane", write), patch.object(converse, "take_turn", summary):
+            states = converse.fanout(t, ["demo", "other"], "Check sync")
+        self.assertEqual(set(seen), {self.root, repo})
+        self.assertEqual(summaries, ["ceo"])
+        for slug in ("demo", "other"):
+            self.assertEqual([status for s, status in transitions if s == slug], ["queued", "running", "running", "done"])
+        self.assertEqual(len([m for _, m, _ in converse.messages(t) if m.get("lane")]), 2)
+        self.assertTrue(all(s["steps"] == ["Read sync/merge.ts"] for s in states))
+        self.assertIn("No local repo", converse.fanout(t, ["demo"], dry_run=True)[0]["prompt"])
+
+    def test_failure_and_limit_do_not_block_other_lanes_and_retry_summarizes_once(self):
+        other = self.root / "companies" / "other"
+        other.mkdir()
+        (other / "company.json").write_text('{"repos": []}')
+        t = converse.new_thread("holding", "Compare", "Compare projects")
+        def engine(prompt, *args):
+            if "Project: demo." in prompt:
+                raise converse.LimitReached("usage limit reached", converse.retry_time("limit"))
+            raise RuntimeError("engine crashed")
+        with patch.object(converse, "lane_engine", engine), patch.object(converse, "start_waiter"), patch.object(converse, "take_turn") as summary:
+            states = converse.fanout(t, ["demo", "other"])
+            self.assertEqual({s["status"] for s in states}, {"limited", "failed"})
+            summary.assert_not_called()
+        [entry] = converse.read_retries()
+        self.assertEqual(entry["brief"], "lane:demo")
+        with patch.object(converse, "lane_engine", return_value=("Recovered.", {})), patch.object(converse, "take_turn") as summary:
+            self.assertEqual(converse.retry_entry(entry), "done")
+            summary.assert_called_once_with(t, "ceo", engine="claude")
+        self.assertEqual(converse.read_retries(), [])
+
+    def test_codex_lanes_are_read_only_and_failure_still_summarizes(self):
+        other = self.root / "companies" / "other"
+        other.mkdir()
+        repo = self.root / "code"
+        repo.mkdir()
+        (other / "company.json").write_text(json.dumps({"repos": [{"local_path": str(repo)}]}))
+        t = converse.new_thread("holding", "Codex", "Compare")
+        seen = []
+        def run(cmd, **kw):
+            seen.append((cmd, kw))
+            if kw["cwd"] == self.root:
+                return converse.subprocess.CompletedProcess(cmd, 1, stdout="", stderr="Engine crashed")
+            Path(cmd[cmd.index("-o") + 1]).write_text("Code exists in src/app.ts.")
+            return converse.subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+        with patch.object(converse.subprocess, "run", run), patch.object(converse, "take_turn") as summary:
+            states = converse.fanout(t, ["demo", "other"], engine="codex", model="example-model")
+            summary.assert_called_once()
+        self.assertEqual({s["status"] for s in states}, {"done", "failed"})
+        self.assertEqual(len(seen), 2)
+        for cmd, kw in seen:
+            self.assertEqual(cmd[cmd.index("--sandbox") + 1], "read-only")
+            self.assertEqual(cmd[cmd.index("-C") + 1], str(kw["cwd"]))
+            self.assertEqual(cmd[cmd.index("-m") + 1], "example-model")
+
+    def test_run_automatically_dispatches_ceo_fanout_line(self):
+        t = converse.new_thread("holding", "Compare", "Investigate")
+        def turn(*args):
+            return converse.add_message(t, "ceo", "owner", "reply", "FANOUT: demo, other | Inspect sync")
+        with patch.object(converse, "take_turn", turn), patch.object(converse, "fanout") as fan:
+            converse.run_thread(t)
+            fan.assert_called_once_with(t, ["demo", "other"], "Inspect sync", engine="claude", model=None)
+        self.assertIsNone(converse.parse_fanout("I might FANOUT: demo, other | maybe"))
+
 if __name__ == "__main__":
     unittest.main()

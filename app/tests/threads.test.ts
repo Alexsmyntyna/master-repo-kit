@@ -65,3 +65,43 @@ test("a message keeps what the owner typed and how many words were fixed", async
     await rm(root, { recursive: true, force: true });
   }
 });
+
+// On-disk fixture exercises all lane states, malformed/absent files, message placement and numbering.
+test("lane fixture reads all states and keeps the CEO summary after collapsed reports", async () => {
+  const { readLanes, collapseLaneMessages } = await import("../src/lib/threads");
+  const root = await mkdtemp(path.join(os.tmpdir(), "master-repo-lanes-"));
+  const base = "holding/threads/compare";
+  const dir = path.join(root, base);
+  try {
+    await mkdir(path.join(dir, "lanes"), { recursive: true });
+    await writeFile(path.join(dir, "thread.md"), '---\ntitle: Compare\nstatus: awaiting-owner\n---\n');
+    const statuses = ["queued", "running", "done", "failed", "limited"];
+    for (const [i, status] of statuses.entries()) {
+      await writeFile(path.join(dir, "lanes", `project-${i}.json`), JSON.stringify({
+        slug: `project-${i}`, role: "coo", status, started: "2026-10-28T10:00:00Z", finished: null,
+        steps: [null, ...Array.from({ length: 8 }, (_, n) => `Read file ${n}`)], result: status === "done" ? "Viable." : null,
+        run_id: `run-${i}`, repo: i ? "/local/repo" : null,
+      }));
+    }
+    await writeFile(path.join(dir, "lanes", "broken.json"), "{");
+    await writeFile(path.join(dir, "lanes", "unknown.json"), '{"status":"surprise"}');
+    await writeFile(path.join(dir, "001-owner.md"), '---\nfrom: owner\nto: ceo\n---\nCompare.');
+    await writeFile(path.join(dir, "002-coo.md"), '---\nfrom: coo\nto: ceo\nlane: project-2\nrun_id: run-2\n---\nViable.');
+    await writeFile(path.join(dir, "003-coo.md"), '---\nfrom: coo\nto: ceo\nlane: missing\n---\nKeep this report.');
+    await writeFile(path.join(dir, "004-ceo.md"), '---\nfrom: ceo\nto: owner\n---\nSummary and recommendation.');
+    const thread = await readThread(root, "holding", "compare");
+    assert.ok(thread);
+    assert.deepEqual(thread.lanes?.map((l) => l.status), statuses);
+    assert.equal(thread.lanes?.[0].repo, null);
+    assert.equal(thread.lanes?.[0].steps.length, 6);
+    assert.equal(thread.messages[1].lane, "project-2");
+    assert.equal(thread.messages[1].run_id, "run-2");
+    const visible = collapseLaneMessages(thread.messages, thread.lanes || []);
+    assert.deepEqual(visible.map((v) => v.n), [1, 3, 4]);
+    assert.equal(visible.at(-1)?.m.from, "ceo");
+    const rerunning = (thread.lanes || []).map((l) => ({ ...l, run_id: "new-run" }));
+    assert.deepEqual(collapseLaneMessages(thread.messages, rerunning).map((v) => v.n), [1, 2, 3, 4]);
+    assert.deepEqual(await readLanes(root, "holding/threads/absent"), []);
+    assert.deepEqual(collapseLaneMessages(thread.messages, []).map((v) => v.n), [1, 2, 3, 4]);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});

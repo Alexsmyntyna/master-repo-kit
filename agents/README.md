@@ -6,8 +6,31 @@ Role prompts for the agents that talk to each other in **threads**. Each file is
 | --- | --- | --- | --- |
 | CEO | [ceo.md](ceo.md) | Focus projects only | Gives directives, weighs trade-offs across the projects with public potential, decides or sends back. |
 | COO | [coo.md](coo.md) | One project | Runs the project: researches viability, reads the code, reports back with options and costs. |
+| Marketing | [marketing.md](marketing.md) | One project | Positioning, the one-line promise, customer and channels, launch plans, copy review against the brand and writing skills. |
+| Research | [research.md](research.md) | One project | Market, competitors, pricing, reviews, past strategies; every claim sourced; writes research pages. |
 
-The owner sits above both. A CEO decision is a recommendation until the owner approves it.
+The owner sits above all of them. A CEO decision is a recommendation until the owner approves it. Marketing and Research are specialists: they answer the one who brought them in, and the CEO can bring either onto a thread.
+
+### Addressing a role
+
+Any file in this folder with a `role:` is a role. Address it with `--to` when you post (`converse.py post <thread> --to marketing …`, `converse.py new <slug> "<title>" --to research …`) and run its turn with `--as` (`converse.py turn <thread> --as marketing`).
+
+### Adding your own role
+
+Drop `agents/<role>.md` in your hub. Front matter, then the prompt in the same plain voice as [coo.md](coo.md):
+
+```
+---
+role: design-review
+title: Short name
+model: sonnet            # haiku | sonnet | opus; the default when a thread doesn't pick one
+max_turns: 40            # cap on the agent's tool-use turns
+tools: [Read, Grep, Glob, WebSearch, WebFetch]   # what it may use; omit a tool to withhold it
+writes: [notes]          # folders under the project it may write; nothing else is writable
+---
+```
+
+Leave out a field and the role gets the COO's defaults (Sonnet, 50 turns, the COO's read-only tools). Never grant Write or Edit in `tools`; list folders in `writes` instead, so a role can only write inside the project it's working on.
 
 ## Who sits on which project
 

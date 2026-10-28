@@ -1,0 +1,15 @@
+.thread-lanes { margin-block: 1.5rem; }
+.thread-lanes > h2 { font-size: 1rem; margin-bottom: .75rem; }
+.thread-lanes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: .75rem; }
+.thread-lane { border: 1px solid var(--line, #ccc); border-radius: .35rem; padding: 1rem; min-width: 0; }
+.thread-lane header { display: flex; justify-content: space-between; gap: .75rem; align-items: baseline; }
+.thread-lane header a { font-weight: 600; }
+.thread-lane header span { font-size: .8rem; }
+.thread-lane p, .thread-lane li { font-size: .85rem; overflow-wrap: anywhere; }
+.thread-lane ol { padding-left: 1.25rem; }
+.thread-lane-result > :first-child { margin-top: 0; }
+.thread-lane-result > :last-child { margin-bottom: 0; }
+.thread-lane details { border-top: 1px solid var(--line, #ccc); padding-top: .65rem; }
+.thread-lane summary { cursor: pointer; font-size: .85rem; }
+.thread-lane.is-running, .thread-lane.is-queued { border-top-width: 3px; }
+.thread-lane.is-failed, .thread-lane.is-limited { border-style: dashed; }

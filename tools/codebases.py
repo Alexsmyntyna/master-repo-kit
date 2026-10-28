@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Every codebase in ~/Documents/GitHub, whether or not it is a project here or on GitHub.
+"""Every codebase in the owner’s code folder, whether or not it is a project here or on GitHub.
 
     codebases.py scan      write holding/codebases/index.json (facts from git and the file tree)
     codebases.py list      print it: kind, last commit, commits, tracked-by, name
@@ -84,20 +84,26 @@ def readme_line(path: Path) -> str:
     return ""
 
 
-def scan_one(path: Path, owners: dict[str, str]) -> dict:
+def code_folder(root: Path | None = None) -> Path:
+    owner_file = (root or ROOT) / "local/owner.json"
+    owner = json.loads(owner_file.read_text()) if owner_file.is_file() else {}
+    return Path(owner.get("code_dir") or FOLDER).expanduser().resolve()
+
+
+def scan_one(path: Path, owners: dict[str, str], root: Path | None = None, inventory: bool = True) -> dict:
     real = os.path.realpath(path)
     project = owners.get(real) or next((s for p, s in owners.items() if p.startswith(real + "/")), "")
-    langs, files, newest = tree(path)
+    langs, files, newest = tree(path) if inventory else (Counter(), 0, 0.0)
     entry = {
         "name": path.name, "slug": slugify(path.name), "path": str(path), "project": project,
-        "readme": readme_line(path), "files": files,
+        "readme": readme_line(path) if inventory else "", "files": files,
         "languages": [e.lstrip(".") for e, _ in langs.most_common(4)],
     }
     if not (path / ".git").exists():
         entry |= {"kind": "folder", "commits": 0, "mine": 0, "remote": "",
                   "last": dt.date.fromtimestamp(newest).isoformat() if newest else "", "first": "", "days": {}}
         return entry
-    identity = re.compile("|".join(re.escape(value) for value in paths.owner_identities(ROOT)), re.I)
+    identity = re.compile("|".join(re.escape(value) for value in paths.owner_identities(root or ROOT)), re.I)
     remote = git(path, "remote", "get-url", "origin")
     authors = git(path, "log", "--format=%ae %an").splitlines()
     mine = sum(1 for a in authors if identity.search(a))
@@ -118,11 +124,12 @@ def scan_one(path: Path, owners: dict[str, str]) -> dict:
 def scan() -> list[dict]:
     paths.owner_identities(ROOT)
     owners = tracked()
-    entries = [scan_one(p, owners) for p in sorted(FOLDER.iterdir(), key=lambda p: p.name.lower())
+    folder = code_folder()
+    entries = [scan_one(p, owners) for p in sorted(folder.iterdir(), key=lambda p: p.name.lower())
                if p.is_dir() and not p.name.startswith(".") and p.resolve() != ROOT]
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "index.json").write_text(json.dumps(
-        {"generated": dt.date.today().isoformat(), "folder": str(FOLDER), "codebases": entries}, indent=2) + "\n")
+        {"generated": dt.date.today().isoformat(), "folder": str(folder), "codebases": entries}, indent=2) + "\n")
     return entries
 
 

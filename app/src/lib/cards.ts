@@ -17,7 +17,7 @@ export type Recheck = { commits: number; since: string; running: boolean; verdic
 export type Line = { text: string; source: string; ref: string; date: string; recheck?: Recheck };
 export type Gate = { name: string; state: "done" | "open" | "unknown"; note: string; source: string; ref: string; date: string };
 export type Moved = { last_commit: string | null; idle_days: number | null; commits_30d: number | null; uncommitted: number | null; branches: number | null };
-export type Owes = { decisions: number; builds_review: number; builds_approved_unrun: number; threads_awaiting: number };
+export type Owes = { decisions: number; builds_review: number; builds_approved_unrun: number; threads_awaiting: number; contradictions: number };
 export type Footprint = {
   hosting: string[];
   database: string[];
@@ -107,6 +107,7 @@ function owesOf(v: unknown): Owes | null {
     builds_review: num(r.builds_review) ?? 0,
     builds_approved_unrun: num(r.builds_approved_unrun) ?? 0,
     threads_awaiting: num(r.threads_awaiting) ?? 0,
+    contradictions: num(r.contradictions) ?? 0,
   };
 }
 

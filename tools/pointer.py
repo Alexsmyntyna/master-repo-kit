@@ -66,7 +66,12 @@ def repo_slugs(root: Path | None = None) -> dict[str, list[str]]:
     return out
 
 
-def render(template: str, repo: Path, slugs: list[str]) -> str:
+def render(template: str, repo: Path, slugs: list[str], root: Path | None = None) -> str:
+    root = root or ROOT
+    owner_file = root / "local/owner.json"
+    owner = json.loads(owner_file.read_text()) if owner_file.is_file() else {}
+    template = template.replace("Master-Repo", owner.get("hub") or "Master-Repo")
+    template = template.replace("~/Documents/GitHub/" + (owner.get("hub") or "Master-Repo"), str(root))
     lines = [f"- `{s}`: `companies/{s}/`" for s in slugs]
     if len(slugs) > 1:
         lines.append("\nThis repo is shared by these projects. Ask the owner which one a task is for unless it's obvious.")
@@ -118,12 +123,12 @@ def without_block(text: str) -> str:
     return re.sub(r"\n?" + BLOCK.pattern + r"\n?", "", text, count=1, flags=re.S)
 
 
-def plan(repo: Path, slugs: list[str], tpl: tuple[str, str]) -> list[tuple[Path, str, str | None]]:
+def plan(repo: Path, slugs: list[str], tpl: tuple[str, str], root: Path | None = None) -> list[tuple[Path, str, str | None]]:
     """[(path, wanted content, current content or None)] for one repo."""
     out = []
     target = repo / FILE_NAME
-    out.append((target, render(tpl[0], repo, slugs), target.read_text() if target.is_file() else None))
-    block = render(tpl[1], repo, slugs)
+    out.append((target, render(tpl[0], repo, slugs, root), target.read_text() if target.is_file() else None))
+    block = render(tpl[1], repo, slugs, root)
     carry, drop = agent_files(repo)
     for f, exists in carry:
         current = f.read_text() if exists else None

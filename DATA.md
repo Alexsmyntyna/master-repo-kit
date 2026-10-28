@@ -13,6 +13,7 @@ Everything below lives inside the data directory. Most missing files and folders
 | `companies/<slug>/decisions.json` | Decisions, newest appended | JSON array |
 | `companies/<slug>/card.json` | The project card: human keys plus derived keys (below) | JSON |
 | `companies/<slug>/footprint.json` | Hosting, database, payments, store, domains seen in the repo, each with its file path. Env var names only, never values. Written by `tools/footprint.py` | JSON |
+| `companies/<slug>/contradictions.json` | Pairs of the owner's statements the contradiction check judged, conflict or not: `[{id, a: {text, date, ref}, b: {...}, conflict, question, status: open\|resolved\|dismissed\|none, found}]`, plus `resolved` once answered. Written by `tools/contradict.py`; open ones count in the card's `owes.contradictions` | JSON array |
 | `companies/<slug>/hygiene.json` | Per repo: stray root files, CLAUDE.md / AGENTS.md lines and last edit, pointer present, untracked counts, `score` with `reasons`. Written by `tools/hygiene.py` | JSON |
 | `companies/<slug>/reviews/`, `notes/`, `reports/` | Dated reviews, working notes, and reports from coding agents (`tools/inbox.py note --kind report`) | Markdown |
 | `companies/<slug>/threads/<date>-<topic>/` | A conversation: `thread.md` (front matter) plus `001-<role>.md` messages | Markdown |
@@ -103,7 +104,7 @@ Derived keys, overwritten by `tools/card.py refresh` (never hand-edit):
 ```json
 {
   "moved": { "last_commit": "2026-10-12", "idle_days": 12, "commits_30d": 16, "uncommitted": 2, "branches": 0 },
-  "owes": { "decisions": 1, "builds_review": 0, "builds_approved_unrun": 0, "threads_awaiting": 1 },
+  "owes": { "decisions": 1, "builds_review": 0, "builds_approved_unrun": 0, "threads_awaiting": 1, "contradictions": 0 },
   "recheck": 0,
   "footprint": { "hosting": ["digitalocean"], "database": ["mongodb"], "payments": [], "store": [], "domains": ["example-shop.com"], "public_urls_ok": null, "monthly_cost": null, "summary": "DigitalOcean + MongoDB; cost unknown" },
   "hygiene": { "stray_root_files": 3, "claude_md_lines": 410, "agents_md_lines": 0, "agent_files_last_edit": "2026-09-01", "pointer_ok": true, "untracked": 2, "score": "fair" },
@@ -125,6 +126,7 @@ They come from `git/snapshot.json`, `holding/pulse.json`, `holding/portfolio.jso
 | `hygiene.py` | `scan --all`: read-only hygiene of each repo |
 | `refresh.py` | `[--commit] [--probe]`: snapshots, pulse, footprint, hygiene, recheck flags, cards, stale marking; commits to main |
 | `recheck.py` | `scan --all\|<slug>` flags open questions (threads awaiting the owner, builds in review, card `blocker`/`next`) asked before newer commits in the project's repos: `recheck_commits`/`recheck_since` front matter, or `recheck: {commits, since}` in the card line. `run <ref>\|--all` has a Sonnet agent answer resolved, rephrase or valid: a resolved thread gets a message and `status: closed`; a rephrased card line keeps its old text in `previous`; every verdict is kept in `recheck_note` with `rechecked`. Logged in `holding/runs.jsonl` as `task: recheck` |
+| `contradict.py` | `check [--slug x] [--days N] [--run]` pairs the owner's dated statements (owner decisions, thread messages, notes, card lines) that share a topic and differ in date, newer within N days (default 30), and with `--run` has a Sonnet judge say whether they conflict; `resolve <slug> <id> --keep a\|b\|both` appends a decision to `decisions.json`; `dismiss`; `list`. Logged in `holding/runs.jsonl` as `task: contradict`. `refresh.py` only counts candidates |
 | `inbox.py` | `context`, `note`, `mockup`, `rule`, `done`: how agents in project repos read from and write here |
 
 ## Wiki page

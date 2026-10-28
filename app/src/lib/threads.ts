@@ -1,4 +1,4 @@
-import { readdir } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { cache } from "react";
 import { splitAttachmentRefs, type AttachmentRef } from "./attachment-refs";
@@ -11,6 +11,8 @@ import { getCompanies, repoRoot } from "./repository";
 export type Role = "owner" | "alex" | "ceo" | "coo";
 export type Message = {
   path: string;
+  lane?: string;
+  run_id?: string;
   from: Role;
   to: Role;
   kind: string;
@@ -52,6 +54,7 @@ export type Thread = {
   started: string;
   updated: string;
   messages: Message[];
+  lanes?: Lane[];
   consults: Consult[];
 };
 // The CEO's questions to project COOs inside one of its turns (tools/converse.py consult); `feeds` is the
@@ -126,12 +129,15 @@ export async function readThread(root: string, scope: string, id: string): Promi
       const { text, refs } = splitAttachmentRefs(doc.content);
       return {
         path: doc.path,
+        lane: str(doc.meta.lane) || undefined,
+        run_id: str(doc.meta.run_id) || undefined,
         from: role(doc.meta.from),
         to: role(doc.meta.to),
         kind: str(doc.meta.kind) || "reply",
         subject: str(doc.meta.subject),
         date: str(doc.meta.date),
-        body: text,
+        // The CEO's `FANOUT: a, b | brief` line is for tools/converse.py; the lanes block shows what it started.
+        body: text.replace(/^FANOUT: .*$\n?/gm, "").trimEnd(),
         refs,
         usage: recordOf(doc.meta.usage),
         attachments: (Array.isArray(doc.meta.attachments) ? doc.meta.attachments : []).map((a) => {
@@ -218,6 +224,7 @@ export async function readThread(root: string, scope: string, id: string): Promi
     started: str(head.meta.started),
     updated: str(head.meta.updated),
     messages,
+    lanes: await readLanes(root, base),
     consults,
   };
 }
@@ -245,3 +252,44 @@ export const getThreads = cache(async () =>
   listThreads(repoRoot, ["holding", ...(await getCompanies()).map((c) => c.id)]),
 );
 export const getThread = cache(async (scope: string, id: string) => readThread(repoRoot, scope, id));
+
+export type Lane = {
+  slug: string;
+  role: Role;
+  status: "queued" | "running" | "done" | "failed" | "limited";
+  started: string;
+  finished: string | null;
+  steps: string[];
+  result: string | null;
+  run_id: string;
+  repo: string | null;
+};
+
+// Files may be observed between writes; leave malformed JSON for the next refresh.
+export async function readLanes(root: string, threadPath: string): Promise<Lane[]> {
+  const dir = path.join(root, threadPath, "lanes");
+  const files = await readdir(dir).catch(() => [] as string[]);
+  const lanes = await Promise.all(files.filter((f) => /^[a-z0-9-]+\.json$/.test(f)).map(async (file): Promise<Lane | undefined> => {
+    try {
+      const value = recordOf(JSON.parse(await readFile(path.join(dir, file), "utf8")));
+      const status = value.status;
+      if (!["queued", "running", "done", "failed", "limited"].includes(String(status))) return undefined;
+      return {
+        slug: str(value.slug) || file.slice(0, -5), role: role(value.role || "coo"),
+        status: status as Lane["status"], started: str(value.started), finished: str(value.finished) || null,
+        steps: Array.isArray(value.steps) ? value.steps.filter((s): s is string => typeof s === "string").slice(-6) : [],
+        result: str(value.result) || null, run_id: str(value.run_id), repo: str(value.repo) || null,
+      };
+    } catch { return undefined; }
+  }));
+  return lanes.filter((lane): lane is Lane => !!lane).sort((a, b) => a.started.localeCompare(b.started) || a.slug.localeCompare(b.slug));
+}
+
+// Preserve message numbers and unmatched reports when a lane file isn't readable yet.
+export function collapseLaneMessages(messages: Message[], lanes: Lane[]) {
+  const represented = new Set(lanes.map((lane) => {
+    const reports = messages.filter((m) => m.lane === lane.slug && (!m.run_id || !lane.run_id || m.run_id === lane.run_id));
+    return reports.at(-1)?.path;
+  }));
+  return messages.map((m, i) => ({ m, n: i + 1 })).filter(({ m }) => !represented.has(m.path));
+}

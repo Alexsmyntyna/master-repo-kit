@@ -38,6 +38,8 @@ import re
 import subprocess
 import sys
 import tempfile
+import uuid
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -46,7 +48,6 @@ import paths  # noqa: E402
 ROOT = paths.ROOT  # the data directory (MASTER_REPO_ROOT, or this checkout)
 TOOLS_DIR = paths.CODE / "tools"  # granted commands name scripts by absolute path, never relative to a cwd
 CHAT_PIN = "MASTER_REPO_CHAT"  # set on a chat agent's run: the one chat thread its spawn/board grants act for
-ROLES = ("owner", "alex", "ceo", "coo")
 KINDS = ("directive", "report", "question", "reply", "decision", "approval")
 # Every decision that reaches the owner ends with this block; the app's decisions desk draws it as a table
 # (app/src/lib/decisions.ts parses it, `desk` below prints it).
@@ -245,6 +246,39 @@ MODELS = ("haiku", "sonnet", "opus", "fable")
 DEFAULT_MODEL = {"ceo": "opus", "coo": "sonnet"}
 
 
+def role_files() -> dict[str, Path]:
+    """Merge prompts per file: data roles override shipped roles without hiding the rest."""
+    out = {}
+    for folder in (paths.CODE / "agents", ROOT / "agents"):
+        for path in sorted(folder.glob("*.md")):
+            meta, _ = split_frontmatter(path.read_text())
+            if re.fullmatch(r"[a-z][a-z0-9-]*", path.stem) and path.stem != "pointer":
+                out[path.stem] = path
+    return out
+
+
+def agent_roles() -> tuple[str, ...]:
+    return tuple(role_files())
+
+
+def roles() -> tuple[str, ...]:
+    return ("owner", "alex", *agent_roles())
+
+
+def role_spec(role: str) -> dict:
+    meta, _ = split_frontmatter(role_files()[role].read_text())
+    tools = meta.get("tools", TOOLS.get(role, TOOLS["coo"]))
+    if isinstance(tools, str):
+        tools = [t.strip().strip('"\'') for t in tools.strip("[]").split(",") if t.strip()]
+    turns = meta.get("max_turns", MAX_TURNS.get(role, 50))
+    # `writes: [wiki/research, notes]`: folders under the thread's project the role may write (front matter only).
+    writes = meta.get("writes", [])
+    if isinstance(writes, str):
+        writes = [w.strip().strip('"\'') for w in writes.strip("[]").split(",") if w.strip()]
+    return {"model": meta.get("model") or DEFAULT_MODEL.get(role, "sonnet"),
+            "max_turns": int(turns), "tools": list(tools), "writes": [w.strip("/") for w in writes if ".." not in w]}
+
+
 def default_model(role: str) -> str:
     """The model a role runs on unless a thread says otherwise: holding/models.json ({"ceo": "fable"}), written by
     the app's "Use as default", overrides DEFAULT_MODEL per role; anything missing or unknown falls back."""
@@ -252,7 +286,7 @@ def default_model(role: str) -> str:
         chosen = json.loads((ROOT / "holding" / "models.json").read_text()).get(role)
     except (OSError, ValueError, AttributeError):
         chosen = None
-    return chosen if chosen in MODELS else DEFAULT_MODEL[role]
+    return chosen if chosen in MODELS else role_spec(role)["model"]
 # Smaller agents the CEO/COO can hand bulk work to, so its own context stays on judgment (--agents).
 HELPERS = {
     "scout": {
@@ -306,6 +340,13 @@ def split_frontmatter(text: str) -> tuple[dict, str]:
                 block.append(lines[i][2:])
                 i += 1
             meta[key.strip()] = "\n".join(block).rstrip("\n")
+            continue
+        if not value:
+            items = []
+            while i < len(lines) and re.match(r"\s+-\s+", lines[i]):
+                items.append(re.sub(r"^\s+-\s+", "", lines[i]).strip().strip('"\''))
+                i += 1
+            meta[key.strip()] = items
             continue
         try:
             meta[key.strip()] = json.loads(value)
@@ -499,7 +540,7 @@ def set_models(thread: Path, role: str, model: str | None, no_helpers: bool = Fa
     """the owner's choice of model for one role on this thread (sticks until they change it), and helpers on/off."""
     meta = read_thread(thread)[0]
     changes: dict = {}
-    if model and role in ("ceo", "coo"):
+    if model and role in agent_roles():
         changes["models"] = {**(meta.get("models") or {}), role: model}
     if no_helpers or meta.get("helpers") is False:
         changes["helpers"] = not no_helpers
@@ -793,8 +834,8 @@ def add_message(thread: Path, sender: str, to: str, kind: str, body: str, subjec
                 extra: dict | None = None, attachments: list[str] | None = None) -> Path:
     sender = "owner" if sender == "alex" else sender
     to = "owner" if to == "alex" else to
-    if sender not in ROLES or to not in ROLES:
-        raise SystemExit(f"Roles are {', '.join(ROLES)}")
+    if sender not in roles() or to not in roles():
+        raise SystemExit(f"Roles are {', '.join(roles())}")
     if kind not in KINDS:
         raise SystemExit(f"Kinds are {', '.join(KINDS)}")
     n = len(messages(thread)) + 1
@@ -986,11 +1027,11 @@ def next_role(thread: Path) -> str | None:
     if not msgs:
         return None
     to = msgs[-1][1].get("to")
-    return to if to in ("ceo", "coo") else None
+    return to if to in agent_roles() else None
 
 
 def build_prompt(thread: Path, role: str) -> str:
-    _, role_text = split_frontmatter((paths.agents_dir(ROOT) / f"{role}.md").read_text())
+    _, role_text = split_frontmatter(role_files()[role].read_text())
     scope = scope_of(thread)
     sections = [role_text, f"Repo root (Master-Repo): {ROOT}. Today is {today()}."]
     focus = scope == "holding" or tier(scope) == "focus"
@@ -1023,6 +1064,14 @@ def build_prompt(thread: Path, role: str) -> str:
         sections.append(f"# The page: {page.get('title') or page.get('url')}\n"
                         + (f"File: `{f}`\n\n{body}" if body else f"(Context: `{f}`)" if f else "(No file behind it.)"))
     sections.append(thread_text(thread))
+    if role == "ceo":
+        states = [json.loads(p.read_text()) for p in sorted((thread / "lanes").glob("*.json"))]
+        if states:
+            sections.append("# Lane results\n" + json.dumps(states, ensure_ascii=False) +
+                            "\nWrite one summary and recommendation using all lane results, including failures. "
+                            "Do not request more fan-out in this summary.")
+        sections.append("To consult several projects after this turn, put this exact line in your body: "
+                        "FANOUT: slug1, slug2 | precise brief. Do not request it again after receiving lane results.")
     up = boss(thread)
     if talk:
         homes = [f"`{d}/`" for d in idea_homes(thread)]
@@ -1119,7 +1168,7 @@ def parse_reply(text: str, role: str, up: str = "ceo") -> dict:
     if role == "coo":
         to = up  # the chain of command: a COO reports to the CEO when there is one, else to the owner
     return {
-        "to": to if to in ROLES and to != role else other,
+        "to": to if to in roles() and to != role else other,
         "kind": kind if kind in KINDS and kind != "approval" else "reply",
         "subject": fields.get("subject", "").strip() or None,
         "summary": fields.get("thread_summary", "").strip() or None,
@@ -1247,7 +1296,7 @@ def run_claude(prompt: str, role: str, scope: str, model: str, extra_dirs: tuple
                helpers: bool = True, writable: tuple[str, ...] = (), consult_from: Path | None = None,
                commands: tuple[str, ...] = (), pin: str | None = None) -> tuple[str, dict]:
     # A folder grants Write and Edit under it; a single file (holding/vision.md) only Edit of that file.
-    tools = list(TOOLS[role]) + [grant for w in writable for grant in (
+    tools = list(role_spec(role)["tools"]) + [grant for w in writable for grant in (
         [f"Edit(./{w})"] if Path(w).suffix else [f"{verb}(./{w}/**)" for verb in ("Write", "Edit")])]
     tools += [f"Bash({c} :*)" for c in commands]
     settings: dict = {"disableAllHooks": True}
@@ -1255,7 +1304,7 @@ def run_claude(prompt: str, role: str, scope: str, model: str, extra_dirs: tuple
         tools.append(f"Bash(python3 {paths.tools_ref()}/converse.py consult {consult_from.relative_to(ROOT)} :*)")
         settings["env"] = {"BASH_DEFAULT_TIMEOUT_MS": "1200000", "BASH_MAX_TIMEOUT_MS": "1800000"}
     cmd = ["claude", "-p", "--model", model, "--output-format", "json", "--no-session-persistence",
-           "--max-turns", str(MAX_TURNS[role]),
+           "--max-turns", str(role_spec(role)["max_turns"]),
            # No hooks or MCP servers from the owner's own setup: a plugin hook once made the agent answer it instead
            # of the thread. (--bare would also skip them, but it forces API-key billing.)
            "--settings", json.dumps(settings), "--strict-mcp-config"]
@@ -1336,7 +1385,7 @@ def take_turn(thread: Path, role: str | None = None, engine: str = "claude", mod
     role = role or next_role(thread)
     if not dry_run and running_pid(thread) not in (None, os.getpid()):
         raise SystemExit("An agent is already working on this thread.")
-    if role not in ("ceo", "coo"):
+    if role not in agent_roles():
         raise SystemExit("Nobody to answer: the last message is addressed to the owner. Reply with `post` or `approve`.")
     prompt = build_prompt(thread, role)
     if dry_run:
@@ -1365,6 +1414,8 @@ def take_turn(thread: Path, role: str | None = None, engine: str = "claude", mod
             if is_talk(thread) and page_wiki(thread):
                 writable += (page_wiki(thread),)
             writable += page_files(thread)
+            if scope != "holding":
+                writable += tuple(f"companies/{scope}/{w}" for w in role_spec(role)["writes"])
             text, usage = run_claude(prompt, role, scope, model, extra, helpers, writable,
                                      consult_from=thread if role == "ceo" else None, commands=chat_commands(thread),
                                      pin=str(thread.relative_to(ROOT)) if is_chat(thread) else None)
@@ -1403,6 +1454,187 @@ def take_turn(thread: Path, role: str | None = None, engine: str = "claude", mod
     if role == "ceo" and answering_alex and parse_reconcile(reply["body"]):
         reconcile(thread, reply["body"])
     return path
+
+
+def parse_fanout(body: str) -> tuple[list[str], str] | None:
+    match = re.search(r"^FANOUT: ([a-z0-9][a-z0-9-]*(?:\s*,\s*[a-z0-9][a-z0-9-]*)+)\s*\|\s*(.+)$", body, re.M)
+    return ([s.strip() for s in match[1].split(",")], match[2].strip()) if match else None
+
+
+def project_repo(slug: str) -> Path | None:
+    company = json.loads((scope_dir(slug) / "company.json").read_text())
+    candidates = [r.get("path") or r.get("local_path") if isinstance(r, dict) else r
+                  for r in company.get("repos") or []]
+    candidates.append(company.get("local_path"))
+    index = ROOT / "holding" / "codebases" / "index.json"
+    if index.exists():
+        candidates += [e.get("path") for e in json.loads(index.read_text()).get("codebases", [])
+                       if e.get("project") == slug]
+    return next((Path(p).expanduser().resolve() for p in candidates if p and Path(p).expanduser().is_dir()), None)
+
+
+def lane_prompt(thread: Path, slug: str, brief: str, repo: Path | None) -> str:
+    _, role = split_frontmatter(role_files()["coo"].read_text())
+    base = scope_dir(slug)
+    card = base / "card.json"
+    latest = next((body for _, meta, body in reversed(messages(thread)) if meta.get("from") == "ceo"), "")
+    context = [role, f"Master-Repo data: {ROOT}. Project: {slug}. Today: {today()}.",
+               "Read-only investigation. Do not write files, run tests, install, or change anything. "
+               "Reply with one or two sentences of findings/recommendation, citing paths; say unknown when needed.",
+               f"Local repo: {repo}" if repo else "No local repo available. Running in the hub with project wiki context only.",
+               "# Card\n" + (card.read_text() if card.exists() else "Unknown"),
+               "# Story and fronts"]
+    for path in [base / "wiki" / "index.md", *sorted((base / "wiki" / "fronts").glob("*.md"))]:
+        if path.exists():
+            meta, body = split_frontmatter(path.read_text())
+            if path.name == "index.md" or meta.get("status", "open") in ("open", "working"):
+                context.append(f"## {path.relative_to(ROOT)}\n{body}")
+    return "\n\n".join([*context, "# CEO latest message\n" + latest, "# Brief\n" + brief, WRITING_RULE])
+
+
+def write_lane(path: Path, state: dict) -> None:
+    # Atomic replacement: readers never see a half-written JSON document.
+    temp = path.with_suffix(".tmp")
+    temp.write_text(json.dumps(state, indent=2, ensure_ascii=False) + "\n")
+    temp.replace(path)
+
+
+def lane_engine(prompt: str, engine: str, model: str | None, cwd: Path, progress) -> tuple[str, dict]:
+    if engine == "codex":
+        with tempfile.NamedTemporaryFile(suffix=".md") as out:
+            cmd = ["codex", "exec", "--sandbox", "read-only", "--skip-git-repo-check", "--ephemeral",
+                   "-C", str(cwd), "-o", out.name]
+            if model:
+                cmd += ["-m", model]
+            proc = subprocess.run([*cmd, "-"], input=prompt, capture_output=True, text=True,
+                                  cwd=cwd, env=subscription_env())
+            if proc.returncode:
+                error = proc.stderr.strip() or proc.stdout.strip()
+                if is_limit(error):
+                    raise LimitReached(error, retry_time(error))
+                raise RuntimeError(error or f"codex exited {proc.returncode}")
+            return Path(out.name).read_text(), {"engine": engine, "model": model or "default"}
+    tools = list(TOOLS["coo"])
+    cmd = ["claude", "-p", "--model", model or default_model("coo"), "--output-format", "stream-json",
+           "--verbose", "--no-session-persistence", "--max-turns", str(role_spec("coo")["max_turns"]),
+           "--settings", json.dumps({"disableAllHooks": True}), "--strict-mcp-config",
+           "--tools", "Read,Grep,Glob,WebSearch,WebFetch,Bash", "--allowedTools", *tools, "--add-dir", str(ROOT)]
+    env = subscription_env()
+    env.pop(CHAT_PIN, None)
+    # Files avoid pipe deadlocks (large prompts and stderr), while stdout stays live.
+    with tempfile.TemporaryFile(mode="w+") as inp, tempfile.TemporaryFile(mode="w+") as err:
+        inp.write(prompt)
+        inp.seek(0)
+        proc = subprocess.Popen(cmd, stdin=inp, stdout=subprocess.PIPE, stderr=err, text=True, cwd=cwd, env=env)
+        result = None
+        raw = []
+        try:
+            for line in proc.stdout:
+                raw.append(line)
+                try:
+                    event = json.loads(line)
+                except ValueError:
+                    continue
+                if event.get("type") == "result":
+                    result = event
+                for block in (event.get("message") or {}).get("content", []):
+                    if isinstance(block, dict) and block.get("type") == "tool_use":
+                        args = block.get("input") or {}
+                        detail = args.get("file_path") or args.get("path") or args.get("pattern") or args.get("query") or args.get("command") or ""
+                        progress(f"{block.get('name', 'tool')} {detail}".strip()[:140])
+            proc.wait()
+        except BaseException:
+            proc.kill()
+            proc.wait()
+            raise
+        finally:
+            proc.stdout.close()
+        err.seek(0)
+        error = err.read()
+    if result is None or result.get("is_error") or proc.returncode:
+        error = str((result or {}).get("result") or error or "".join(raw))[-1000:]
+        if is_limit(error) and (result or {}).get("subtype") != "error_max_turns":
+            raise LimitReached(error, retry_time(error))
+        raise RuntimeError(error or f"claude exited {proc.returncode}")
+    return result.get("result") or "", {"engine": engine, "model": model or default_model("coo"),
+                                           "turns": result.get("num_turns")}
+
+
+def fanout(thread: Path, projects: list[str], brief: str = "", engine: str = "claude",
+           model: str | None = None, dry_run: bool = False, resume: bool = False) -> list[dict]:
+    if not has_ceo(thread):
+        raise SystemExit("Fan-out requires a CEO thread.")
+    if running_pid(thread) not in (None, os.getpid()):
+        raise SystemExit("An agent is already working on this thread.")
+    slugs = list(dict.fromkeys(s.strip() for s in projects if s.strip()))
+    if not slugs:
+        raise SystemExit("Give at least one project.")
+    plans = []
+    for slug in slugs:
+        scope_dir(slug)
+        repo = project_repo(slug)
+        plans.append((slug, repo, lane_prompt(thread, slug, brief, repo)))
+    if dry_run:
+        return [{"slug": slug, "repo": str(repo) if repo else None, "cwd": str(repo or ROOT), "prompt": prompt}
+                for slug, repo, prompt in plans]
+    import threading
+    post_lock = threading.Lock()
+    folder = thread / "lanes"
+    folder.mkdir(exist_ok=True)
+    rel = str(thread.relative_to(ROOT))
+    states = []
+    for slug, repo, _ in plans:
+        state = {"slug": slug, "role": "coo", "status": "queued", "started": local_now().isoformat(),
+                 "finished": None, "steps": [], "result": None, "run_id": uuid.uuid4().hex,
+                 "repo": str(repo) if repo else None, "brief": brief}
+        write_lane(folder / f"{slug}.json", state)
+        states.append(state)
+    update_thread(thread, running={"role": "coo", "engine": engine, "pid": os.getpid(),
+                                   "since": local_now().isoformat(), "task": "fanout"})
+
+    def lane(plan, state):
+        slug, repo, prompt = plan
+        path = folder / f"{slug}.json"
+        state.update(status="running", started=local_now().isoformat())
+        write_lane(path, state)
+        def progress(line):
+            state["steps"] = [*state["steps"], line][-6:]
+            write_lane(path, state)
+        usage = {}
+        try:
+            text, usage = lane_engine(prompt, engine, model, repo or ROOT, progress)
+            text = text.strip()
+            state.update(status="done", result=text)
+            drop_retry(rel, f"lane:{slug}")
+        except LimitReached as hit:
+            state.update(status="limited", result=hit.message[:500])
+            queue_retry({"thread": rel, "brief": f"lane:{slug}", "role": "coo", "model": model,
+                         "engine": engine, "retry_at": hit.retry_at.isoformat()})
+        except (Exception, SystemExit) as error:
+            state.update(status="failed", result=(str(error) or type(error).__name__)[:500])
+            drop_retry(rel, f"lane:{slug}")
+        finally:
+            state["finished"] = local_now().isoformat()
+            write_lane(path, state)
+        with post_lock:
+            add_message(thread, "coo", "ceo", "report", state["result"] or "No result returned.",
+                        subject=f"{slug}: {state['status']}", extra={"lane": slug, "run_id": state["run_id"], "usage": usage})
+            log_run({"thread": rel, "scope": slug, "role": "coo", "task": "fanout", "engine": engine,
+                     "model": model or "default", "started": state["started"], "run_id": state["run_id"],
+                     "ok": state["status"] == "done", "limit": state["status"] == "limited"})
+    try:
+        with ThreadPoolExecutor(max_workers=len(plans)) as pool:
+            futures = [pool.submit(lane, plan, state) for plan, state in zip(plans, states)]
+            for future in futures:
+                future.result()
+    finally:
+        update_thread(thread, clear=("running",))
+    all_states = [json.loads(p.read_text()) for p in folder.glob("*.json")]
+    if any(s["status"] == "limited" for s in all_states):
+        start_waiter()
+    elif not any(s["status"] in ("queued", "running") for s in all_states):
+        take_turn(thread, "ceo", engine=engine)  # one summary after every lane has reached a terminal state
+    return states
 
 
 def chat_commands(thread: Path) -> tuple[str, ...]:
@@ -1462,6 +1694,11 @@ def run_thread(thread: Path, rounds: int = RUN_ROUNDS, engine: str = "claude", m
                   flush=True)
             return False
         print(out.relative_to(ROOT), flush=True)
+        if nxt == "ceo":
+            request = parse_fanout(messages(thread)[-1][2])
+            if request:
+                fanout(thread, *request, engine=engine, model=model)
+                break
         if role:
             role = model = None
     return True
@@ -1471,6 +1708,12 @@ def retry_entry(entry: dict) -> str:
     """Run one queued entry again: "done", "queued" (the limit again; it has a new time), "dropped" (nothing left
     to run, or it failed for another reason; a failure shows on the thread as before) or "busy" (running now)."""
     rel, brief = entry["thread"], entry.get("brief")
+    if brief and brief.startswith("lane:"):
+        thread = thread_path(rel)
+        state = json.loads((thread / "lanes" / f"{brief[5:]}.json").read_text())
+        fanout(thread, [state["slug"]], state.get("brief", ""), entry.get("engine") or "claude",
+               entry.get("model"), resume=True)
+        return "queued" if any(same_retry(e, rel, brief) for e in read_retries()) else "done"
     if brief or "/builds/" in rel:
         import build  # late: build imports this module
         return build.retry_after_limit(entry)
@@ -1644,7 +1887,7 @@ def reconcile_after(thread: Path, model: str | None = None) -> list[dict]:
     items = open_questions(thread)
     if not items:
         return []
-    _, role_text = split_frontmatter((paths.agents_dir(ROOT) / "ceo.md").read_text())
+    _, role_text = split_frontmatter(role_files()["ceo"].read_text())
     vision = ROOT / "holding" / "vision.md"
     prompt = "\n\n".join([
         role_text, f"Repo root (Master-Repo): {ROOT}. Today is {today()}.",
@@ -1700,7 +1943,7 @@ def consult(thread: Path, slug: str, question: str, model: str | None = None) ->
     meta = {"project": slug, "feeds": feeds, "model": model, "status": "running",
             "started": started.isoformat(timespec="seconds"), "question": question}
     write_doc(path, meta, "")
-    _, role_text = split_frontmatter((paths.agents_dir(ROOT) / "coo.md").read_text())
+    _, role_text = split_frontmatter(role_files()["coo"].read_text())
     prompt = "\n\n".join([
         role_text, f"Repo root (Master-Repo): {ROOT}. Today is {today()}.",
         "# The project\n" + project_brief(slug, 6000),
@@ -1753,7 +1996,7 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--attach", nargs="+", default=[], help="files, folders or images for the agents to look at")
     p.add_argument("--model", choices=MODELS, help="model for the agent this goes to, from now on in this thread")
     p.add_argument("--no-helpers", action="store_true", help="the agents work alone, without smaller helper agents")
-    p.add_argument("--from", dest="sender", default="owner"); p.add_argument("--to", choices=("ceo", "coo"))
+    p.add_argument("--from", dest="sender", default="owner"); p.add_argument("--to", choices=agent_roles())
     p.add_argument("--kind", default="directive")
     p.add_argument("--talk", action="store_true", help="a conversation (ideas, revisions), not a run toward a decision")
     p.add_argument("--about", nargs="+", default=[], help="other projects this thread is also about")
@@ -1763,10 +2006,14 @@ def main(argv: list[str] | None = None) -> None:
         p = sub.add_parser(name); p.add_argument("thread"); p.add_argument("--engine", choices=("claude", "codex"), default="claude")
         p.add_argument("--model")
         if name == "turn":
-            p.add_argument("--as", dest="role", choices=("ceo", "coo")); p.add_argument("--dry-run", action="store_true")
+            p.add_argument("--as", dest="role", choices=agent_roles()); p.add_argument("--dry-run", action="store_true")
         else:
             p.add_argument("--rounds", type=int, default=4)
-    p = sub.add_parser("post"); p.add_argument("thread"); p.add_argument("--as", dest="role", required=True, choices=ROLES)
+    p = sub.add_parser("fanout", help="run project COOs concurrently, then one CEO summary")
+    p.add_argument("thread"); p.add_argument("--projects", required=True)
+    p.add_argument("--brief", default=""); p.add_argument("--engine", choices=("claude", "codex"), default="claude")
+    p.add_argument("--model"); p.add_argument("--dry-run", action="store_true")
+    p = sub.add_parser("post"); p.add_argument("thread"); p.add_argument("--as", dest="role", required=True, choices=roles())
     p.add_argument("--to"); p.add_argument("--kind", default="reply"); p.add_argument("--body", required=True)
     p.add_argument("--subject"); p.add_argument("--typed", help=typed_help)
     p.add_argument("--attach", nargs="+", default=[], help="files, folders or images for the agents to look at")
@@ -1841,6 +2088,10 @@ def main(argv: list[str] | None = None) -> None:
             run_thread(thread, rounds=8)
     elif a.cmd == "consult":
         print(consult(thread_path(a.thread), a.slug, " ".join(a.question), a.model))
+    elif a.cmd == "fanout":
+        result = fanout(thread_path(a.thread), a.projects.split(","), a.brief, a.engine, a.model, a.dry_run)
+        if a.dry_run:
+            print(json.dumps(result, indent=2))
     elif a.cmd == "turn":
         thread = thread_path(a.thread)
         out = take_turn(thread, a.role, a.engine, a.model, a.dry_run)

@@ -16,6 +16,9 @@ Steps, in order (each runs even if an earlier one printed warnings):
                                          and a `stale_since` line. Nothing else in the file changes; nothing is
                                          deleted.
 
+After the steps the report counts contradiction candidates (tools/contradict.py: pairs of the owner's statements that
+may conflict, not yet judged) and open contradictions. Judging them takes an agent, so it is `contradict.py check --run`.
+
 With --commit, files changed under companies/ and holding/ (none over 1 MB; skipped ones are printed) are committed
 as "refresh YYYY-MM-DD" and pushed to origin main. Exits non-zero only when a step crashes.
 
@@ -34,6 +37,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import card  # noqa: E402
+import contradict  # noqa: E402
 import footprint  # noqa: E402
 import paths  # noqa: E402
 import rules  # noqa: E402
@@ -168,6 +172,16 @@ def commit(on: dt.date) -> str:
                                                           f"; push failed: {push.stderr.strip()[:200]}")
 
 
+def contradictions_line(root: Path) -> str:
+    """Candidate pairs not judged yet and open contradictions. Judging is `contradict.py check --run`, not this chain."""
+    slugs = footprint.all_slugs(root)
+    todo = {s: len(contradict.pending(s, root)) for s in slugs}
+    todo = {s: n for s, n in todo.items() if n}
+    open_ = sum(contradict.open_count(s, root) for s in slugs)
+    return (f"contradictions: {sum(todo.values())} candidate pairs to judge in {len(todo)} projects, {open_} open"
+            + (f" ({', '.join(f'{s} {n}' for s, n in todo.items())})" if todo else ""))
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--commit", action="store_true", help="commit companies/ and holding/ changes and push to main")
@@ -194,6 +208,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"stale: FAILED ({e})")
     if marked and "cards" not in crashed:  # owes counts change when a thread or build goes stale
         step("cards again", [f"{t}/card.py", "refresh", "--all"])
+    try:
+        print(contradictions_line(ROOT))
+    except Exception as e:  # noqa: BLE001 — a report line, never a reason to stop
+        print(f"contradictions: FAILED ({e})")
     print(rules.audit(ROOT)["summary"] + "; " + rules.condensation(ROOT, today()))
     result = commit(today()) if a.commit else "not committed (no --commit)"
     print(f"refresh {today().isoformat()}: {len(steps) + 1 - len(crashed)}/{len(steps) + 1} steps ok"

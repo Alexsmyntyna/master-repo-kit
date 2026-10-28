@@ -8,7 +8,8 @@ companies/<slug>/card.json holds two kinds of keys:
            companies/<slug>/git/snapshot.json, holding/pulse.json, holding/portfolio.json,
            companies/<slug>/threads/*/thread.md, companies/<slug>/builds/*/build.md,
            companies/<slug>/footprint.json and companies/<slug>/hygiene.json. `recheck` counts the open questions
-           tools/recheck.py flagged (commits since they were asked); it is kept apart from `owes`
+           tools/recheck.py flagged (commits since they were asked); it is kept apart from `owes`.
+           `owes.contradictions` counts open items in companies/<slug>/contradictions.json (tools/contradict.py)
 A card that doesn't exist yet is created with the human keys empty and `"needs": "goal, gates, blocker, next"`.
 
 Usage:
@@ -84,8 +85,15 @@ def moved(slug: str, root: Path) -> dict:
             "uncommitted": row.get("uncommitted") if row else None, "branches": row.get("branches") if row else None}
 
 
+def open_contradictions(slug: str, root: Path) -> int:
+    """Conflicts tools/contradict.py found between what the owner said before and now, still waiting for an answer."""
+    data = footprint.read_json(f"companies/{slug}/contradictions.json", root, [])
+    return sum(1 for e in data if isinstance(e, dict) and e.get("status") == "open") if isinstance(data, list) else 0
+
+
 def owes(slug: str, root: Path) -> dict:
-    out = {"decisions": 0, "builds_review": 0, "builds_approved_unrun": 0, "threads_awaiting": 0}
+    out = {"decisions": 0, "builds_review": 0, "builds_approved_unrun": 0, "threads_awaiting": 0,
+           "contradictions": open_contradictions(slug, root)}
     for t in sorted((root / "companies" / slug / "threads").glob("*/thread.md")):
         meta = frontmatter(t)
         if meta.get("status") not in ("awaiting-alex", "awaiting-owner"):
@@ -198,7 +206,8 @@ def moved_line(m: dict) -> str:
 def owes_line(o: dict) -> str:
     labels = (("decisions", "decision", "decisions"), ("threads_awaiting", "thread awaiting", "threads awaiting"),
               ("builds_review", "build to review", "builds to review"),
-              ("builds_approved_unrun", "approved build not run", "approved builds not run"))
+              ("builds_approved_unrun", "approved build not run", "approved builds not run"),
+              ("contradictions", "contradiction to settle", "contradictions to settle"))
     bits = [f"{o[k]} {one if o[k] == 1 else many}" for k, one, many in labels if (o or {}).get(k)]
     return " · ".join(bits) or "nothing"
 

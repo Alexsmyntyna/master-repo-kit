@@ -1,6 +1,6 @@
 import type { Owes } from "@/lib/cards";
 
-// What a project waits on the owner for, as verbs with counts: decide, review, reply (amber), and builds approved but not
+// What a project waits on the owner for, as verbs with counts: decide, review, reply, settle (amber), and builds approved but not
 // run yet (quiet: that one is on the agents). `full` spells each out for the project card.
 export function OwesBadges({ owes, full = false }: { owes: Owes | null; full?: boolean }) {
   if (!owes) return null;
@@ -8,6 +8,7 @@ export function OwesBadges({ owes, full = false }: { owes: Owes | null; full?: b
     [owes.decisions, "decide", `decision${owes.decisions === 1 ? "" : "s"} to make`, true],
     [owes.builds_review, "review", `build${owes.builds_review === 1 ? "" : "s"} to review`, true],
     [owes.threads_awaiting, "reply", `thread${owes.threads_awaiting === 1 ? "" : "s"} waiting on you`, true],
+    [owes.contradictions, "settle", `contradiction${owes.contradictions === 1 ? "" : "s"} to settle`, true],
     [owes.builds_approved_unrun, "to run", "approved, not run", false],
   ];
   const shown = items.filter(([n]) => n > 0);
