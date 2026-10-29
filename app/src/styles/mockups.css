@@ -52,10 +52,12 @@
 /* ---------- review: the mockup large on the left, the panel on the right */
 .mr-review { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 32px; align-items: start; }
 /* screens and the click mode in a narrow column beside the frame, so the frame gets the full height */
-.mr-stage-col { min-width: 0; display: grid; gap: 12px; align-items: start; position: sticky; top: 64px; }
+/* minmax(0, 1fr): a long row of screen tabs scrolls instead of widening the column the mockup is scaled to fit. */
+.mr-stage-col { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: start; position: sticky; top: 64px; }
 /* the modes, screens and view buttons in one row above the frame, so the frame gets the column's whole width */
 .mr-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .mr-screens, .mr-mode { grid-auto-flow: column; }
+.mr-screens { min-width: 0; max-width: 100%; overflow-x: auto; scrollbar-width: thin; }
 .mr-review.no-panel { grid-template-columns: minmax(0, 1fr); }
 .mr-review.no-panel .mr-panel { display: none; }
 .mr-screens, .mr-mode { display: grid; gap: 2px; padding: 2px; border-radius: var(--r-md); background: var(--surface); border: 1px solid var(--line-soft); }

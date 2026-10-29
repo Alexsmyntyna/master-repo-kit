@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.3 — 2026-10-28
+
+- Landing page and GitHub Pages files (`docs/`), checked claim by claim against the code.
+- Mockup review: a mockup with many screens no longer spills under the notes panel; the screen tabs scroll instead.
+- `master update` tells you when a release changes a shipped skill you have overridden in `local/skills/`, with the `git diff` to compare. The override is kept and the update is never blocked.
+
 ## 0.2.2 — 2026-10-28
 
 - Security: agents' `git branch` allows are exact commands with no wildcard, since git accepts bundled flags (`-vD`) and shortened options (`--del`) that slipped past 0.2.1's deny patterns. Filtered listing goes through `git for-each-ref`.

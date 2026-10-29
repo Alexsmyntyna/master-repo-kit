@@ -59,6 +59,12 @@ def incoming_changelog(code: Path, ref: str) -> str:
     return new if new != old else 'No incoming CHANGELOG.md changes.'
 
 
+def overridden_changes(code: Path, root: Path, base: str, ref: str) -> list[str]:
+    # Shipped skills the incoming release changed that the hub overrides in local/skills/.
+    changed = git(code, 'diff', '--name-only', base, ref, '--', 'skills/*.md').splitlines()
+    return [f for f in changed if f != 'skills/INDEX.md' and (root / 'local' / f).is_file()]
+
+
 def update(code: Path = paths.CODE, root: Path = paths.ROOT) -> None:
     dirty = git(code, 'status', '--porcelain=v1', '--untracked-files=no').strip()
     if dirty:
@@ -85,6 +91,8 @@ def update(code: Path = paths.CODE, root: Path = paths.ROOT) -> None:
     if data:
         raise SystemExit('Refusing update: incoming changes include data or unrecognized paths:\n' + '\n'.join(data))
     print(incoming_changelog(code, ref), flush=True)
+    overlaps = overridden_changes(code, root, base, ref)
+    new = git(code, 'rev-parse', '--short', ref).strip()
     tag = subprocess.run(['git', '-C', str(code), 'describe', '--tags', '--exact-match', ref], capture_output=True, text=True)
     label = tag.stdout.strip() if tag.returncode == 0 else git(code, 'rev-parse', '--short', ref).strip()
     try:
@@ -116,6 +124,8 @@ def update(code: Path = paths.CODE, root: Path = paths.ROOT) -> None:
             git(code, 'commit', '-q', '--amend', '--no-edit')  # fold into the merge commit
     after = git(code, 'rev-parse', 'HEAD').strip()
     print(f'Kit {label}; hub {before[:12]} -> {after[:12]}; changed:\n' + ('\n'.join(incoming) or '(no engine changes)'))
+    for f in overlaps:
+        print(f'Your override local/{f} is kept; the kit changed {f} in this release. Compare: git diff {base[:7]}..{new} -- {f}')
 
 if __name__ == '__main__':
     update()

@@ -1,5 +1,5 @@
 {
-  "version": "0.2.2",
+  "version": "0.2.3",
   "include": [
     "app/",
     "tools/",
@@ -376,13 +376,20 @@
       "file": "tools/test_contradict.py",
       "pattern": "alex",
       "reason": "Version 1 provenance/role/status token retained for reading and migrating existing data; new data uses owner."
+    },
+    {
+      "file": "docs/index.html",
+      "pattern": "Alexsmyntyna",
+      "reason": "Public kit repository URL (github.com/Alexsmyntyna/master-repo-kit) in the Pages site's links and clone command."
     }
   ],
   "copy": {
     "kit/README.md": "README.md",
     "kit/LICENSE": "LICENSE",
     "kit/CHANGELOG.md": "CHANGELOG.md",
-    "guide/how-to-use.md": "kit/starter/guide/how-to-use.md"
+    "guide/how-to-use.md": "kit/starter/guide/how-to-use.md",
+    "kit/site/index.html": "docs/index.html",
+    "kit/site/.nojekyll": "docs/.nojekyll"
   },
   "ignore_terms": [
     {

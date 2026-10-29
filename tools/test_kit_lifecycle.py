@@ -28,9 +28,11 @@ def lifecycle(tmp_path):
     for name in ('init.py', 'update.py', 'paths.py', 'migrate.py', 'skills.py', 'codebases.py', 'pointer.py'):
         shutil.copy2(Path(__file__).parent / name, code / 'tools' / name)
     (code / 'tools/demo.py').write_text('first\n')
+    (code / 'skills').mkdir()
+    (code / 'skills/demo.md').write_text('---\nname: demo\ntitle: Demo\nkind: task\nwhen: testing\nstatus: ready\n---\nShipped one.\n')
     (code / 'CHANGELOG.md').write_text('# Changes\n\n## 0.1.0\nFirst\n')
     (code / '.gitignore').write_text('__pycache__/\n*.pyc\n')
-    config = {'include': ['tools/', 'CHANGELOG.md', 'kit.json', '.gitignore'], 'allow': [], 'exclude': []}
+    config = {'include': ['tools/', 'skills/', 'CHANGELOG.md', 'kit.json', '.gitignore'], 'allow': [], 'exclude': []}
     (code / 'kit.json').write_text(json.dumps(config))
     release = tmp_path / 'release'; release.mkdir()
     git(release, 'init', '-b', 'main'); identity(release)
@@ -56,6 +58,7 @@ def lifecycle(tmp_path):
     user_commit = git(hub, 'rev-parse', 'HEAD')
     git(hub, 'push', '-u', 'origin', 'HEAD')
     (code / 'tools/demo.py').write_text('second\n')
+    (code / 'skills/demo.md').write_text('---\nname: demo\ntitle: Demo\nkind: task\nwhen: testing\nstatus: ready\n---\nShipped two.\n')
     (code / 'tools/neutral.py').write_text('# no data migration\n')
     (code / 'CHANGELOG.md').write_text('# Changes\n\n## 0.1.1\nSecond\n\n## 0.1.0\nFirst\n')
     export.release(code, code, release, '0.1.1', config)
@@ -74,7 +77,9 @@ def test_release_init_update_history(lifecycle, capsys):
     git(hub, 'merge-base', '--is-ancestor', release_commit, 'HEAD')
     assert git(hub, 'tag', '--list', 'v0.1.1') == 'v0.1.1'
     assert git(hub, 'show', '-s', '--format=%s', 'HEAD') == 'Update kit to v0.1.1'
-    assert 'Incoming CHANGELOG.md:' in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert 'Incoming CHANGELOG.md:' in out
+    assert 'Your override local/skills/demo.md is kept; the kit changed skills/demo.md in this release. Compare: git diff ' in out
     assert json.loads((hub / 'kit.json').read_text())['version'] == '0.1.1'
 
 
